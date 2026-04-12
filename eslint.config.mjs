@@ -31,6 +31,12 @@ export default [
       unicorn
     },
     rules: {
+      'jsdoc/check-tag-names': [
+        'error',
+        {
+          definedTags: ['note', 'record']
+        }
+      ],
       'no-await-in-loop': 'error',
       'no-use-before-define': [
         'error',
