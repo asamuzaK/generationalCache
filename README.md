@@ -84,17 +84,31 @@ const cache = new GenerationalCache(1024);
 
 ## Performance Benchmark
 
-**Benchmark Settings:** Cache Size = 4,096 / Operations = 1,000,000
-
-| Operation | **generational-cache** | [quick-lru](https://www.npmjs.com/package/quick-lru) | [lru-cache](https://www.npmjs.com/package/lru-cache) |
+### 1. Small Cache (Max Size = 512)
+| Operation | **GenerationalCache** | LRUCache | QuickLRU |
 | :--- | :--- | :--- | :--- |
-| **Set (Write)** | 13,043,064 ops/sec (69.8%) | 13,935,320 ops/sec (74.6%) | **18,683,766 ops/sec (100%)** |
-| **Get (Read Hit)** | 14,988,863 ops/sec (67.8%) | 7,173,508 ops/sec (32.4%) | **22,117,092 ops/sec (100%)** |
-| **Eviction (Write & Drop)** | 13,520,767 ops/sec (92.4%) | **14,632,419 ops/sec (100%)** | 6,390,511 ops/sec (43.7%) |
+| **Set (Write)** | 16,248,854 ops/sec | 20,164,908 ops/sec | **22,025,703 ops/sec** |
+| **Get (Read Hit)** | 27,754,957 ops/sec | **30,751,442 ops/sec** | 10,050,473 ops/sec |
+| **Eviction (Write & Drop)** | 14,543,846 ops/sec | 8,483,030 ops/sec | **15,655,528 ops/sec** |
 
-### Key Takeaways:
-* **Well-Balanced Efficiency**: While it may not claim the top spot in every individual category, Generational Cache offers a highly stable and balanced performance profile across all operations.
-* **Reliable Performance**: It avoids the significant performance drops seen in other libraries (such as the low Read speeds in [quick-lru](https://www.npmjs.com/package/quick-lru) or the low Eviction speeds in [lru-cache](https://www.npmjs.com/package/lru-cache)), making it a dependable choice for general-purpose caching.
+### 2. Medium Cache (Max Size = 2,048)
+| Operation | **GenerationalCache** | LRUCache | QuickLRU |
+| :--- | :--- | :--- | :--- |
+| **Set (Write)** | 14,474,126 ops/sec | **18,440,930 ops/sec** | 16,359,275 ops/sec |
+| **Get (Read Hit)** | 18,302,313 ops/sec | **29,124,630 ops/sec** | 8,153,813 ops/sec |
+| **Eviction (Write & Drop)** | 14,070,535 ops/sec | 8,218,095 ops/sec | **16,193,650 ops/sec** |
+
+### 3. Large Cache (Max Size = 8,192)
+| Operation | **GenerationalCache** | LRUCache | QuickLRU |
+| :--- | :--- | :--- | :--- |
+| **Set (Write)** | 12,024,592 ops/sec | **15,474,007 ops/sec** | 13,605,923 ops/sec |
+| **Get (Read Hit)** | 12,797,592 ops/sec | **14,580,150 ops/sec** | 6,519,168 ops/sec |
+| **Eviction (Write & Drop)** | 13,097,062 ops/sec | 6,341,982 ops/sec | **13,440,733 ops/sec** |
+
+### Well-Balanced Efficiency
+* As the max size increases, [LRUCache](https://www.npmjs.com/package/lru-cache) becomes bottlenecked in `Eviction (Write & Drop)`, and [QuickLRU](https://www.npmjs.com/package/quick-lru) becomes bottlenecked in `Get (Read Hit)`.
+  However, `GenerationalCache` does not exhibit the significant performance degradation seen in other libraries.
+* While it may not hold the top spot in any individual operation, `GenerationalCache` delivers a stable and well-balanced performance profile across all operations.
 
 ## License
 
