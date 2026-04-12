@@ -21,8 +21,11 @@ export class GenerationalCache {
   }
 
   /**
-   * Returns the total number of items currently in the cache.
-   * @returns {number} The current size of the cache.
+   * Returns the total number of `entries` currently in the cache.
+   * @note To optimize for write speed, this library allows temporary key
+   * duplication between generations. Therefore, this value may not always
+   * reflect the exact count of unique `keys`.
+   * @returns {number} The total entry count.
    */
   get size() {
     return this.#current.size + this.#old.size;

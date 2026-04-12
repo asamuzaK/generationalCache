@@ -41,7 +41,9 @@ Creates a new cache instance.
 
 ### Properties
 
-* **`cache.size`** *(number, read-only)*: Returns the total number of items currently in the cache.
+* **`cache.size`** *(number, read-only)*: Returns the total number of *entries* currently in the cache.
+  **Note:** To optimize for write speed, this library allows temporary key duplication between generations.
+  Therefore, this value may not always reflect the exact count of unique *keys*.
 * **`cache.max`** *(number)*: Gets or sets the maximum capacity.
   **Note:** Updating this property dynamically will invoke `cache.clear()` to safely recalculate boundaries.
 
@@ -52,7 +54,7 @@ Creates a new cache instance.
   If the item is found in the older generation, it is automatically promoted to the current generation to prevent it from being evicted during the next swap.
     * **Returns:** The value associated with the key, or `undefined`.
 * **`cache.set(key, value)`**
-  Adds or updates an item. If adding this item pushes the current generation's size to the boundary threshold (`max / 2`), a generation swap is triggered, and the oldest generation is discarded.
+  Adds or updates an item. If adding this item pushes the current generation's size to the boundary threshold (`max / 2`), a generation swap is triggered, and the old generation is discarded.
     * **Returns:** The cache instance itself (allows chaining).
 * **`cache.has(key)`**
   Checks if a key exists in the cache (in either generation).
@@ -67,7 +69,7 @@ Creates a new cache instance.
 
 Benchmarks are conducted under two distinct states:
 - **Cold**: Measured during the first 1,000,000 operations (initial execution/interpreted state).
-- **Warm**: Measured over a sustained period (minimum 2 seconds) after a 200,000 operation warmup to ensure the V8 TurboFan compiler has fully optimized the hot paths.
+- **Warm**: Measured over a sustained period (minimum 2 seconds) after a 200,000 operation warmup.
 
 ### Benchmark Environment
 - **Engine:** Node.js v24.x (V8)
