@@ -1,6 +1,6 @@
 {
   "name": "@asamuzakjp/generational-cache",
-  "description": "A Map-like, generational pseudo-LRU cache.",
+  "description": "A generational pseudo-LRU cache with strict maximum size limits.",
   "author": "asamuzaK",
   "license": "MIT",
   "homepage": "https://github.com/asamuzaK/generationalCache",
@@ -37,7 +37,6 @@
     "neostandard": "^0.13.0",
     "prettier": "^3.8.2",
     "quick-lru": "^7.3.0",
-    "sinon": "^21.1.1",
     "typescript": "^6.0.2"
   },
   "overrides": {
