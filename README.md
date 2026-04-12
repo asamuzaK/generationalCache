@@ -16,7 +16,7 @@ This "pseudo-LRU" approach avoids the overhead of updating timestamps or complex
 
 ## Installation
 
-Under development. Not yet published to npm.
+(Under development. Not yet published to npm.)
 
 ## Usage
 
