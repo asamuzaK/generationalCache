@@ -27,12 +27,14 @@ const createCaches = () => ({
  * Measures "Cold" performance (No warmup, fixed ops)
  */
 function measureCold(cache, scenarioFn) {
-  if (global.gc) global.gc();
-  
+  if (global.gc) {
+    global.gc();
+  }
+
   const start = performance.now();
   const checksum = scenarioFn(cache, COLD_OPS);
   const end = performance.now();
-  
+
   const duration = end - start;
   const opsPerSec = Math.floor((COLD_OPS / duration) * 1000);
   return { opsPerSec, checksum };
@@ -42,7 +44,9 @@ function measureCold(cache, scenarioFn) {
  * Measures "Warm" performance (With warmup, sustained execution)
  */
 function measureWarm(cache, scenarioFn) {
-  if (global.gc) global.gc();
+  if (global.gc) {
+    global.gc();
+  }
 
   // 1. Warmup
   scenarioFn(cache, WARMUP_OPS);
@@ -67,7 +71,7 @@ function measureWarm(cache, scenarioFn) {
 
 function runBenchmark(label, scenarioFn) {
   console.log(`=== Scenario: ${label} ===`);
-  
+
   const caches = createCaches();
   // Pre-fill for non-write tests to ensure initial hits
   if (label !== 'Set' && label !== 'Eviction') {
@@ -79,7 +83,7 @@ function runBenchmark(label, scenarioFn) {
   for (const [name, cache] of Object.entries(caches)) {
     // 1. Cold Test
     const cold = measureCold(cache, scenarioFn);
-    // 2. Warm Test (Using the same instance to represent an optimized/aged cache)
+    // 2. Warm Test
     const warm = measureWarm(cache, scenarioFn);
 
     console.log(`${name.padEnd(12)} | Cold: ${cold.opsPerSec.toLocaleString().padStart(12)} ops/sec | Warm: ${warm.opsPerSec.toLocaleString().padStart(12)} ops/sec`);
