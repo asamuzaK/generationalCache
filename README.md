@@ -120,6 +120,8 @@ Benchmarks are conducted under two distinct states:
 * **High JIT Affinity**: The library is designed with a simple internal structure that the V8 engine can optimize effectively.
   This results in notable performance gains once the execution state becomes **Warm**.
 * **Balanced Read/Write**: It provides stable and competitive performance across all basic operations (`get`, `set`, `has`), making it suitable for both read-heavy and write-heavy environments.
+* **Conclusion**: As a developer, I'm more surprised than anyone by these benchmark results.
+  I'm confident in the quality of the library, but benchmark results should probably be taken with a grain of salt :)
 
 ## License
 
