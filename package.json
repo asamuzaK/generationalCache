@@ -33,6 +33,7 @@
     "eslint-plugin-unicorn": "^64.0.0",
     "globals": "^17.4.0",
     "lru-cache": "^11.3.3",
+    "mitata": "^1.0.34",
     "mocha": "^11.7.5",
     "neostandard": "^0.13.0",
     "prettier": "^3.8.2",
