@@ -1,6 +1,10 @@
 # generational-cache
 
-A lightweight, **generational pseudo-LRU (Least Recently Used) cache** for JavaScript.
+[![CI](https://github.com/asamuzaK/generationalCache/actions/workflows/ci.yaml/badge.svg)](https://github.com/asamuzaK/generationalCache/actions/workflows/ci.yaml)
+[![CodeQL](https://github.com/asamuzaK/generationalCache/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/asamuzaK/generationalCache/actions/workflows/github-code-scanning/codeql)
+[![npm (scoped)](https://img.shields.io/npm/v/@asamuzakjp/generational-cache)](https://www.npmjs.com/package/@asamuzakjp/generational-cache)
+
+A lightweight, **generational pseudo-LRU (Least Recently Used) cache** with strict maximum size limits.
 
 `GenerationalCache` uses a two-generation strategy (Current and Old) to provide a balance between memory efficiency and high-speed access, making it particularly effective for workloads with frequent evictions.
 
@@ -32,7 +36,7 @@ const cache = new GenerationalCache(1024);
 
 Creates a new cache instance.
 
-* **`max`** *(number)*: The absolute maximum number of items the cache can hold.
+* **`max`** *(number)*: The maximum number of items the cache can hold.
   If the specified value is less than 4, or if an invalid value is specified, the default value of 4 will be used.
 
 ### Properties
@@ -67,7 +71,7 @@ Benchmarks are conducted under two distinct states:
 
 ### Benchmark Environment
 - **Engine:** Node.js v24.x (V8)
-- **Comparison:** [LRUCache](https://www.npmjs.com/package/lru-cache) (v10.x), [QuickLRU](https://www.npmjs.com/package/quick-lru) (v7.x)
+- **Comparison:** [LRUCache](https://www.npmjs.com/package/lru-cache) (v11.x), [QuickLRU](https://www.npmjs.com/package/quick-lru) (v7.x)
 
 ### 1. Small Cache (Max Size = 512)
 | Operation | State | **GenerationalCache** | LRUCache | QuickLRU |
@@ -84,14 +88,14 @@ Benchmarks are conducted under two distinct states:
 ### 2. Medium Cache (Max Size = 2,048)
 | Operation | State | **GenerationalCache** | LRUCache | QuickLRU |
 | :--- | :--- | :--- | :--- | :--- |
-| **Set** (Write) | Cold | **16,645,055 ops/sec** | 11,969,181 ops/sec | 14,921,119 ops/sec |
-| | Warm | **19,529,570 ops/sec** | 13,794,190 ops/sec | 14,993,141 ops/sec |
-| **Get** (Read) | Cold | **18,250,906 ops/sec** | 17,979,629 ops/sec | 13,769,476 ops/sec |
-| | Warm | **22,691,331 ops/sec** | 18,488,753 ops/sec | 18,646,665 ops/sec |
-| **Has** (Check) | Cold | **24,106,027 ops/sec** | 20,103,129 ops/sec | 15,491,098 ops/sec |
-| | Warm | **27,027,482 ops/sec** | 25,403,131 ops/sec | 21,154,767 ops/sec |
-| **Eviction** | Cold | **19,689,729 ops/sec** | 7,530,676 ops/sec | 14,336,259 ops/sec |
-| | Warm | **22,854,286 ops/sec** | 7,873,287 ops/sec | 14,899,234 ops/sec |
+| **Set** (Write) | Cold | **16,717,208 ops/sec** | 12,015,129 ops/sec | 13,754,647 ops/sec |
+| | Warm | **20,665,750 ops/sec** | 14,043,051 ops/sec | 15,196,877 ops/sec |
+| **Get** (Read) | Cold | 18,225,625 ops/sec | **18,616,427 ops/sec** | 13,740,453 ops/sec |
+| | Warm | **23,682,122 ops/sec** | 19,039,069 ops/sec | 18,642,768 ops/sec |
+| **Has** (Check) | Cold | **24,056,735 ops/sec** | 20,591,766 ops/sec | 19,523,661 ops/sec |
+| | Warm | **27,590,773 ops/sec** | 24,826,357 ops/sec | 21,069,831 ops/sec |
+| **Eviction** | Cold | **17,541,920 ops/sec** | 7,585,705 ops/sec | 14,921,431 ops/sec |
+| | Warm | **22,087,077 ops/sec** | 7,933,788 ops/sec | 14,707,521 ops/sec |
 
 ### 3. Large Cache (Max Size = 8,192)
 | Operation | State | **GenerationalCache** | LRUCache | QuickLRU |
