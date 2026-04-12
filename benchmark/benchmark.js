@@ -7,7 +7,7 @@ import { LRUCache } from 'lru-cache';
 import QuickLRU from 'quick-lru';
 import { GenerationalCache } from '../src/index.js';
 
-const CACHE_SIZE = 100_000;
+const CACHE_SIZE = 4_096;
 const OPERATIONS = 1_000_000;
 
 console.log('==================================================');
@@ -15,25 +15,39 @@ console.log(` Benchmark: Cache Size = ${CACHE_SIZE.toLocaleString()} / Operation
 console.log('==================================================\n');
 
 // =======================================
-// Initialize caches
+// 1. Setup (Exclude generation cost from measurements)
 // =======================================
-const caches = {
+const hitKeys = new Array(OPERATIONS);
+const evictKeys = new Array(OPERATIONS);
+
+for (let i = 0; i < OPERATIONS; i++) {
+  // For basic tests
+  hitKeys[i] = `key-${i % CACHE_SIZE}`;
+  evictKeys[i] = `evict-${i}`;
+}
+
+// Factory function to generate clean cache instances for each test
+const createCaches = () => ({
   Generational: new GenerationalCache(CACHE_SIZE),
   QuickLRU: new QuickLRU({ maxSize: CACHE_SIZE }),
   LRUCache: new LRUCache({ max: CACHE_SIZE })
-};
+});
 
 // =======================================
 // Benchmark helper function
 // =======================================
 function runTest(testName, fn) {
+  if (global.gc) {
+    global.gc();
+  }
+
   const start = performance.now();
   fn();
   const end = performance.now();
+  
   const durationMs = end - start;
   const opsPerSec = Math.floor((OPERATIONS / durationMs) * 1000);
 
-  // Format and output the result
   console.log(`${testName.padEnd(12)} | ${String(opsPerSec.toLocaleString()).padStart(12)} ops/sec`);
 }
 
@@ -41,36 +55,36 @@ function runTest(testName, fn) {
 // Test scenarios
 // =======================================
 
-// 1. Set (Write) - Pure insertion until the cache is full
+// 1. Set (Write)
 console.log('--- 1. Set (Write) ---');
-for (const [name, cache] of Object.entries(caches)) {
+let cachesSet = createCaches();
+for (const [name, cache] of Object.entries(cachesSet)) {
   runTest(name, () => {
     for (let i = 0; i < OPERATIONS; i++) {
-      // Use i % CACHE_SIZE as the key to prevent eviction
-      cache.set(`key-${i % CACHE_SIZE}`, i);
+      cache.set(hitKeys[i], i);
     }
   });
 }
 console.log('');
 
-// 2. Get (Read Hit) - Accessing existing keys
+// 2. Get (Read Hit)
 console.log('--- 2. Get (Read Hit) ---');
-for (const [name, cache] of Object.entries(caches)) {
+for (const [name, cache] of Object.entries(cachesSet)) {
   runTest(name, () => {
     for (let i = 0; i < OPERATIONS; i++) {
-      cache.get(`key-${i % CACHE_SIZE}`);
+      cache.get(hitKeys[i]);
     }
   });
 }
 console.log('');
 
-// 3. Eviction (Write & Drop) - Continuous insertion exceeding the cache limit, forcing eviction
+// 3. Eviction (Write & Drop)
 console.log('--- 3. Eviction (Write & Drop) ---');
-for (const [name, cache] of Object.entries(caches)) {
+let cachesEvict = createCaches();
+for (const [name, cache] of Object.entries(cachesEvict)) {
   runTest(name, () => {
     for (let i = 0; i < OPERATIONS; i++) {
-      // Always generate new keys, continuously pushing out old ones
-      cache.set(`evict-${i}`, i);
+      cache.set(evictKeys[i], i);
     }
   });
 }
