@@ -14,7 +14,10 @@ const WARMUP_OPS = 200_000; // Warmup to trigger TurboFan optimization
 
 // Setup access patterns
 const keys = Array.from({ length: CACHE_SIZE * 2 }, (_, i) => `key-${i}`);
-const hitPattern = Array.from({ length: 100_000 }, () => keys[Math.floor(Math.random() * CACHE_SIZE * 1.2)]);
+const hitPattern = Array.from(
+  { length: 100_000 },
+  () => keys[Math.floor(Math.random() * CACHE_SIZE * 1.2)]
+);
 const evictPattern = Array.from({ length: 100_000 }, (_, i) => `evict-${i}`);
 
 const createCaches = () => ({
@@ -76,7 +79,9 @@ function runBenchmark(label, scenarioFn) {
   // Pre-fill for non-write tests to ensure initial hits
   if (label !== 'Set' && label !== 'Eviction') {
     for (const cache of Object.values(caches)) {
-      for (let i = 0; i < CACHE_SIZE; i++) cache.set(keys[i], i);
+      for (let i = 0; i < CACHE_SIZE; i++) {
+        cache.set(keys[i], i);
+      }
     }
   }
 
@@ -93,25 +98,33 @@ function runBenchmark(label, scenarioFn) {
 
 const scenarios = {
   "Set": (cache, count) => {
-    for (let i = 0; i < count; i++) cache.set(hitPattern[i % hitPattern.length], i);
+    for (let i = 0; i < count; i++) {
+      cache.set(hitPattern[i % hitPattern.length], i);
+    }
     return count;
   },
   "Get": (cache, count) => {
     let sum = 0;
     for (let i = 0; i < count; i++) {
-      if (cache.get(hitPattern[i % hitPattern.length]) !== undefined) sum++;
+      if (cache.get(hitPattern[i % hitPattern.length]) !== undefined) {
+        sum++;
+      }
     }
     return sum;
   },
   "Has": (cache, count) => {
     let sum = 0;
     for (let i = 0; i < count; i++) {
-      if (cache.has(hitPattern[i % hitPattern.length])) sum++;
+      if (cache.has(hitPattern[i % hitPattern.length])) {
+        sum++;
+      }
     }
     return sum;
   },
   "Eviction": (cache, count) => {
-    for (let i = 0; i < count; i++) cache.set(evictPattern[i % evictPattern.length], i);
+    for (let i = 0; i < count; i++) {
+      cache.set(evictPattern[i % evictPattern.length], i);
+    }
     return count;
   }
 };
