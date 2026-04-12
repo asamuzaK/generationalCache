@@ -19,8 +19,6 @@ This "pseudo-LRU" approach avoids the overhead of updating timestamps or complex
 (Under development. Not yet published to npm.)
 
 ## Usage
-
-### Initialization
 ```javascript
 import { GenerationalCache } from '@asamuzakjp/generational-cache';
 
@@ -28,32 +26,11 @@ import { GenerationalCache } from '@asamuzakjp/generational-cache';
 const cache = new GenerationalCache(1024);
 ```
 
-### Basic Operations
-```javascript
-// Adding items
-cache.set('key', 'value');
-
-// Retrieving items (automatically promotes from old generation)
-const value = cache.get('key');
-
-// Checking existence
-if (cache.has('key')) {
-  console.log('Exists!');
-}
-
-// Removing an item
-cache.delete('key');
-```
-
 ## API
 
 ### `new GenerationalCache(max)`
 
 Creates a new cache instance.
-
-```javascript
-const cache = new GenerationalCache(1024);
-```
 
 * **`max`** *(number)*: The absolute maximum number of items the cache can hold.
   If the specified value is less than 4, or if an invalid value is specified, the default value of 4 will be used.
@@ -82,33 +59,61 @@ const cache = new GenerationalCache(1024);
 * **`cache.clear()`**
   Empties all items from the cache by dropping references to the internal Maps.
 
-## Performance Benchmark
+## Performance
+
+Benchmarks are conducted under two distinct states:
+- **Cold**: Measured during the first 1,000,000 operations (initial execution/interpreted state).
+- **Warm**: Measured over a sustained period (minimum 2 seconds) after a 200,000 operation warmup to ensure the V8 TurboFan compiler has fully optimized the hot paths.
+
+### Benchmark Environment
+- **Engine:** Node.js v24.x (V8)
+- **Comparison:** [LRUCache](https://www.npmjs.com/package/lru-cache) (v10.x), [QuickLRU](https://www.npmjs.com/package/quick-lru) (v7.x)
 
 ### 1. Small Cache (Max Size = 512)
-| Operation | **GenerationalCache** | LRUCache | QuickLRU |
-| :--- | :--- | :--- | :--- |
-| **Set (Write)** | 16,248,854 ops/sec | 20,164,908 ops/sec | **22,025,703 ops/sec** |
-| **Get (Read Hit)** | 27,754,957 ops/sec | **30,751,442 ops/sec** | 10,050,473 ops/sec |
-| **Eviction (Write & Drop)** | 14,543,846 ops/sec | 8,483,030 ops/sec | **15,655,528 ops/sec** |
+| Operation | State | **GenerationalCache** | LRUCache | QuickLRU |
+| :--- | :--- | :--- | :--- | :--- |
+| **Set** (Write) | Cold | **19,468,661 ops/sec** | 12,253,880 ops/sec | 14,059,833 ops/sec |
+| | Warm | **22,448,956 ops/sec** | 15,212,070 ops/sec | 19,564,756 ops/sec |
+| **Get** (Read) | Cold | 20,476,236 ops/sec | **21,898,561 ops/sec** | 14,064,737 ops/sec |
+| | Warm | **22,919,320 ops/sec** | 21,645,229 ops/sec | 17,014,971 ops/sec |
+| **Has** (Check) | Cold | **29,467,406 ops/sec** | 25,214,703 ops/sec | 22,890,838 ops/sec |
+| | Warm | **32,132,729 ops/sec** | 30,581,429 ops/sec | 24,231,771 ops/sec |
+| **Eviction** | Cold | **15,390,582 ops/sec** | 7,747,331 ops/sec | 14,977,548 ops/sec |
+| | Warm | **22,561,506 ops/sec** | 8,719,546 ops/sec | 16,666,595 ops/sec |
 
 ### 2. Medium Cache (Max Size = 2,048)
-| Operation | **GenerationalCache** | LRUCache | QuickLRU |
-| :--- | :--- | :--- | :--- |
-| **Set (Write)** | 14,474,126 ops/sec | **18,440,930 ops/sec** | 16,359,275 ops/sec |
-| **Get (Read Hit)** | 18,302,313 ops/sec | **29,124,630 ops/sec** | 8,153,813 ops/sec |
-| **Eviction (Write & Drop)** | 14,070,535 ops/sec | 8,218,095 ops/sec | **16,193,650 ops/sec** |
+| Operation | State | **GenerationalCache** | LRUCache | QuickLRU |
+| :--- | :--- | :--- | :--- | :--- |
+| **Set** (Write) | Cold | **16,645,055 ops/sec** | 11,969,181 ops/sec | 14,921,119 ops/sec |
+| | Warm | **19,529,570 ops/sec** | 13,794,190 ops/sec | 14,993,141 ops/sec |
+| **Get** (Read) | Cold | **18,250,906 ops/sec** | 17,979,629 ops/sec | 13,769,476 ops/sec |
+| | Warm | **22,691,331 ops/sec** | 18,488,753 ops/sec | 18,646,665 ops/sec |
+| **Has** (Check) | Cold | **24,106,027 ops/sec** | 20,103,129 ops/sec | 15,491,098 ops/sec |
+| | Warm | **27,027,482 ops/sec** | 25,403,131 ops/sec | 21,154,767 ops/sec |
+| **Eviction** | Cold | **19,689,729 ops/sec** | 7,530,676 ops/sec | 14,336,259 ops/sec |
+| | Warm | **22,854,286 ops/sec** | 7,873,287 ops/sec | 14,899,234 ops/sec |
 
 ### 3. Large Cache (Max Size = 8,192)
-| Operation | **GenerationalCache** | LRUCache | QuickLRU |
-| :--- | :--- | :--- | :--- |
-| **Set (Write)** | 12,024,592 ops/sec | **15,474,007 ops/sec** | 13,605,923 ops/sec |
-| **Get (Read Hit)** | 12,797,592 ops/sec | **14,580,150 ops/sec** | 6,519,168 ops/sec |
-| **Eviction (Write & Drop)** | 13,097,062 ops/sec | 6,341,982 ops/sec | **13,440,733 ops/sec** |
+| Operation | State | **GenerationalCache** | LRUCache | QuickLRU |
+| :--- | :--- | :--- | :--- | :--- |
+| **Set** (Write) | Cold | **16,837,879 ops/sec** | 9,963,136 ops/sec | 12,286,159 ops/sec |
+| | Warm | **19,945,392 ops/sec** | 17,228,602 ops/sec | 18,884,842 ops/sec |
+| **Get** (Read) | Cold | 16,013,759 ops/sec | **16,450,290 ops/sec** | 12,865,658 ops/sec |
+| | Warm | **19,337,312 ops/sec** | 17,065,952 ops/sec | 17,184,599 ops/sec |
+| **Has** (Check) | Cold | **19,498,536 ops/sec** | 18,350,745 ops/sec | 16,538,575 ops/sec |
+| | Warm | **25,538,961 ops/sec** | 23,307,309 ops/sec | 19,500,123 ops/sec |
+| **Eviction** | Cold | **17,549,339 ops/sec** | 5,717,072 ops/sec | 11,841,634 ops/sec |
+| | Warm | **21,743,343 ops/sec** | 6,764,521 ops/sec | 13,307,417 ops/sec |
 
-### Well-Balanced Efficiency
-* As the max size increases, [LRUCache](https://www.npmjs.com/package/lru-cache) becomes bottlenecked in `Eviction (Write & Drop)`, and [QuickLRU](https://www.npmjs.com/package/quick-lru) becomes bottlenecked in `Get (Read Hit)`.
-  However, `GenerationalCache` does not exhibit the significant performance degradation seen in other libraries.
-* While it may not hold the top spot in any individual operation, `GenerationalCache` delivers a stable and well-balanced performance profile across all operations.
+*Note: Higher values (ops/sec) indicate better performance.*
+
+### Key Characteristics
+
+* **High Eviction Efficiency**: `GenerationalCache` demonstrates strong throughput during high-turnover workloads, maintaining a performance margin compared to standard LRU designs in large-scale eviction scenarios.
+* **Predictable Scalability**: While other libraries may experience performance degradation as cache size increases, `GenerationalCache` maintains consistent throughput due to its generational swap mechanism.
+* **High JIT Affinity**: The library is designed with a simple internal structure that the V8 engine can optimize effectively.
+  This results in notable performance gains once the execution state becomes **Warm**.
+* **Balanced Read/Write**: It provides stable and competitive performance across all basic operations (`get`, `set`, `has`), making it suitable for both read-heavy and write-heavy environments.
 
 ## License
 
