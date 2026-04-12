@@ -78,38 +78,38 @@ Benchmarks are conducted under two distinct states:
 ### 1. Small Cache (Max Size = 512)
 | Operation | State | **GenerationalCache** | LRUCache | QuickLRU |
 | :--- | :--- | :--- | :--- | :--- |
-| **Set** (Write) | Cold | **19,468,661 ops/sec** | 12,253,880 ops/sec | 14,059,833 ops/sec |
-| | Warm | **22,448,956 ops/sec** | 15,212,070 ops/sec | 19,564,756 ops/sec |
-| **Get** (Read) | Cold | 20,476,236 ops/sec | **21,898,561 ops/sec** | 14,064,737 ops/sec |
-| | Warm | **22,919,320 ops/sec** | 21,645,229 ops/sec | 17,014,971 ops/sec |
-| **Has** (Check) | Cold | **29,467,406 ops/sec** | 25,214,703 ops/sec | 22,890,838 ops/sec |
-| | Warm | **32,132,729 ops/sec** | 30,581,429 ops/sec | 24,231,771 ops/sec |
-| **Eviction** | Cold | **15,390,582 ops/sec** | 7,747,331 ops/sec | 14,977,548 ops/sec |
-| | Warm | **22,561,506 ops/sec** | 8,719,546 ops/sec | 16,666,595 ops/sec |
+| **Set** (Write) | Cold | **19,887,239 ops/sec** | 14,087,900 ops/sec | 16,806,807 ops/sec |
+| | Warm | **21,584,459 ops/sec** | 14,904,413 ops/sec | 19,311,201 ops/sec |
+| **Get** (Read) | Cold | 20,610,609 ops/sec | **20,978,434 ops/sec** | 16,025,846 ops/sec |
+| | Warm | 23,032,528 ops/sec | **25,448,338 ops/sec** | 18,482,769 ops/sec |
+| **Has** (Check) | Cold | **29,734,913 ops/sec** | 24,906,910 ops/sec | 20,799,750 ops/sec |
+| | Warm | **31,387,459 ops/sec** | 30,892,880 ops/sec | 25,644,508 ops/sec |
+| **Eviction** | Cold | **19,354,938 ops/sec** | 2,121,395 ops/sec | 12,118,788 ops/sec |
+| | Warm | **22,021,226 ops/sec** | 2,137,790 ops/sec | 14,613,687 ops/sec |
 
 ### 2. Medium Cache (Max Size = 2,048)
 | Operation | State | **GenerationalCache** | LRUCache | QuickLRU |
 | :--- | :--- | :--- | :--- | :--- |
-| **Set** (Write) | Cold | **16,717,208 ops/sec** | 12,015,129 ops/sec | 13,754,647 ops/sec |
-| | Warm | **20,665,750 ops/sec** | 14,043,051 ops/sec | 15,196,877 ops/sec |
-| **Get** (Read) | Cold | 18,225,625 ops/sec | **18,616,427 ops/sec** | 13,740,453 ops/sec |
-| | Warm | **23,682,122 ops/sec** | 19,039,069 ops/sec | 18,642,768 ops/sec |
-| **Has** (Check) | Cold | **24,056,735 ops/sec** | 20,591,766 ops/sec | 19,523,661 ops/sec |
-| | Warm | **27,590,773 ops/sec** | 24,826,357 ops/sec | 21,069,831 ops/sec |
-| **Eviction** | Cold | **17,541,920 ops/sec** | 7,585,705 ops/sec | 14,921,431 ops/sec |
-| | Warm | **22,087,077 ops/sec** | 7,933,788 ops/sec | 14,707,521 ops/sec |
+| **Set** (Write) | Cold | **16,232,896 ops/sec** | 12,363,950 ops/sec | 14,230,783 ops/sec |
+| | Warm | **19,730,122 ops/sec** | 13,807,557 ops/sec | 15,766,171 ops/sec |
+| **Get** (Read) | Cold | 17,704,253 ops/sec | **18,134,010 ops/sec** | 12,607,621 ops/sec |
+| | Warm | **22,794,329 ops/sec** | 20,627,632 ops/sec | 19,183,657 ops/sec |
+| **Has** (Check) | Cold | **24,606,541 ops/sec** | 20,186,401 ops/sec | 19,395,594 ops/sec |
+| | Warm | **28,206,400 ops/sec** | 25,866,308 ops/sec | 22,220,654 ops/sec |
+| **Eviction** | Cold | **19,353,140 ops/sec** | 2,090,788 ops/sec | 10,765,896 ops/sec |
+| | Warm | **23,006,473 ops/sec** | 2,083,787 ops/sec | 13,650,451 ops/sec |
 
 ### 3. Large Cache (Max Size = 8,192)
 | Operation | State | **GenerationalCache** | LRUCache | QuickLRU |
 | :--- | :--- | :--- | :--- | :--- |
-| **Set** (Write) | Cold | **16,837,879 ops/sec** | 9,963,136 ops/sec | 12,286,159 ops/sec |
-| | Warm | **19,945,392 ops/sec** | 17,228,602 ops/sec | 18,884,842 ops/sec |
-| **Get** (Read) | Cold | 16,013,759 ops/sec | **16,450,290 ops/sec** | 12,865,658 ops/sec |
-| | Warm | **19,337,312 ops/sec** | 17,065,952 ops/sec | 17,184,599 ops/sec |
-| **Has** (Check) | Cold | **19,498,536 ops/sec** | 18,350,745 ops/sec | 16,538,575 ops/sec |
-| | Warm | **25,538,961 ops/sec** | 23,307,309 ops/sec | 19,500,123 ops/sec |
-| **Eviction** | Cold | **17,549,339 ops/sec** | 5,717,072 ops/sec | 11,841,634 ops/sec |
-| | Warm | **21,743,343 ops/sec** | 6,764,521 ops/sec | 13,307,417 ops/sec |
+| **Set** (Write) | Cold | **18,146,547 ops/sec** | 10,762,270 ops/sec | 13,988,263 ops/sec |
+| | Warm | **19,761,427 ops/sec** | 17,268,525 ops/sec | 18,342,775 ops/sec |
+| **Get** (Read) | Cold | 16,416,641 ops/sec | **17,362,316 ops/sec** | 13,026,753 ops/sec |
+| | Warm | 19,624,929 ops/sec | **19,648,275 ops/sec** | 18,292,695 ops/sec |
+| **Has** (Check) | Cold | **23,778,555 ops/sec** | 19,508,731 ops/sec | 17,462,978 ops/sec |
+| | Warm | **26,344,654 ops/sec** | 22,837,556 ops/sec | 19,423,611 ops/sec |
+| **Eviction** | Cold | **16,391,642 ops/sec** | 2,000,574 ops/sec | 10,262,451 ops/sec |
+| | Warm | **21,538,604 ops/sec** | 1,980,739 ops/sec | 13,656,256 ops/sec |
 
 *Note: Higher values (ops/sec) indicate better performance.*
 
