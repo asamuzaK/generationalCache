@@ -19,8 +19,9 @@ A lightweight, **generational pseudo-LRU (Least Recently Used) cache** with stri
 This "pseudo-LRU" approach avoids the overhead of updating timestamps or complex linked list pointers on every single access.
 
 ## Installation
-
-(Under development. Not yet published to npm.)
+```bash
+npm i @asamuzakjp/generational-cache
+```
 
 ## Usage
 ```javascript
