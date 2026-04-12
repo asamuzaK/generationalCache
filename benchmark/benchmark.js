@@ -7,7 +7,7 @@ import { LRUCache } from 'lru-cache';
 import QuickLRU from 'quick-lru';
 import { GenerationalCache } from '../src/index.js';
 
-const CACHE_SIZE = 4_096;
+const CACHE_SIZE = 8_192;
 const OPERATIONS = 1_000_000;
 
 console.log('==================================================');
@@ -29,8 +29,8 @@ for (let i = 0; i < OPERATIONS; i++) {
 // Factory function to generate clean cache instances for each test
 const createCaches = () => ({
   Generational: new GenerationalCache(CACHE_SIZE),
-  QuickLRU: new QuickLRU({ maxSize: CACHE_SIZE }),
-  LRUCache: new LRUCache({ max: CACHE_SIZE })
+  LRUCache: new LRUCache({ max: CACHE_SIZE }),
+  QuickLRU: new QuickLRU({ maxSize: CACHE_SIZE })
 });
 
 // =======================================
