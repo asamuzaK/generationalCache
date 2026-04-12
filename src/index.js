@@ -1,10 +1,7 @@
 /**
  * @file generational-cache.js
- * A Map-like, generational pseudo-LRU cache with strict maximum size limits
- * and O(1) operations.
+ * A generational pseudo-LRU cache with strict maximum size limits.
  */
-
-/* global IterableIterator */
 
 /**
  * @template K, V
@@ -12,18 +9,14 @@
 export class GenerationalCache {
   #max;
   #boundary;
-  #current;
-  #old;
+  #current = new Map();
+  #old = new Map();
 
   /**
    * Initializes a new instance of the GenerationalCache class.
    * @param {number} max - The maximum number of items the cache can hold.
    */
   constructor(max) {
-    /** @type {Map<K, V>} */
-    this.#current = new Map();
-    /** @type {Map<K, V>} */
-    this.#old = new Map();
     this.max = max;
   }
 
@@ -68,12 +61,12 @@ export class GenerationalCache {
    * undefined if the key cannot be found.
    */
   get(key) {
-    if (this.#current.has(key)) {
-      return this.#current.get(key);
+    let value = this.#current.get(key);
+    if (value !== undefined) {
+      return value;
     }
-    if (this.#old.has(key)) {
-      const value = this.#old.get(key);
-      // Promote the accessed item to the current generation.
+    value = this.#old.get(key);
+    if (value !== undefined) {
       this.set(key, value);
       return value;
     }
@@ -84,15 +77,9 @@ export class GenerationalCache {
    * Adds or updates an element with a specified key and a value to the cache.
    * @param {K} key - The key of the element to add.
    * @param {V} value - The value of the element to add.
-   * @returns {GenerationalCache<K, V>} The cache object itself to allow for
-   * chaining.
+   * @returns {GenerationalCache} The cache object itself.
    */
   set(key, value) {
-    // Prevent duplicate keys between #current and #old to ensure accurate size
-    // counting
-    if (this.#old.has(key)) {
-      this.#old.delete(key);
-    }
     this.#current.set(key, value);
     // Swap generations if the current map reaches the boundary
     if (this.#current.size >= this.#boundary) {
@@ -120,7 +107,9 @@ export class GenerationalCache {
    * removed, or false if the element does not exist.
    */
   delete(key) {
-    return this.#current.delete(key) || this.#old.delete(key);
+    const deletedFromCurrent = this.#current.delete(key);
+    const deletedFromOld = this.#old.delete(key);
+    return deletedFromCurrent || deletedFromOld;
   }
 
   /**
@@ -129,73 +118,5 @@ export class GenerationalCache {
   clear() {
     this.#current.clear();
     this.#old.clear();
-  }
-
-  /**
-   * Returns a new Iterator object that contains the keys for each element in
-   * the cache.
-   * @yields {K} A key from the cache.
-   * @returns {IterableIterator<K>} An iterator for the keys.
-   */
-  *keys() {
-    for (const key of this.#current.keys()) {
-      yield key;
-    }
-    for (const key of this.#old.keys()) {
-      yield key;
-    }
-  }
-
-  /**
-   * Returns a new Iterator object that contains the values for each element in
-   * the cache.
-   * @yields {V} A value from the cache.
-   * @returns {IterableIterator<V>} An iterator for the values.
-   */
-  *values() {
-    for (const value of this.#current.values()) {
-      yield value;
-    }
-    for (const value of this.#old.values()) {
-      yield value;
-    }
-  }
-
-  /**
-   * Returns a new Iterator object that contains an array of [key, value] for
-   * each element in the cache.
-   * @yields {[K, V]} A key-value pair from the cache.
-   * @returns {IterableIterator<[K, V]>} An iterator for the key-value
-   * pairs.
-   */
-  *entries() {
-    for (const entry of this.#current.entries()) {
-      yield entry;
-    }
-    for (const entry of this.#old.entries()) {
-      yield entry;
-    }
-  }
-
-  /**
-   * Returns a new Iterator object that contains an array of [key, value] for
-   * each element.
-   * Allows the cache to be used in for...of loops.
-   * @returns {IterableIterator<[K, V]>} An iterator for the key-value
-   * pairs.
-   */
-  [Symbol.iterator]() {
-    return this.entries();
-  }
-
-  /**
-   * Executes a provided function once per each key/value pair in the cache.
-   * @param {(value: V, key: K, cache: GenerationalCache<K, V>) => void} callbackFn - Function to execute for each element.
-   * @param {unknown} [thisArg] - Value to use as `this` when executing callbackFn.
-   */
-  forEach(callbackFn, thisArg) {
-    for (const [key, value] of this) {
-      callbackFn.call(thisArg, value, key, this);
-    }
   }
 }
