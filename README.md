@@ -109,13 +109,18 @@ Benchmarks are divided into two states to simulate real-world conditions:
 | **Eviction** | Cold | **13,340,448 ops/sec** | 5,236,973 ops/sec | 9,320,533 ops/sec |
 | | Warm | **19,409,937 ops/sec** | 6,889,424 ops/sec | 12,671,059 ops/sec |
 
+### 4. Cyclic Access (Max Size = 8,192 / Working Set = 5,000)
+| Metric | **GenerationalCache** | LRUCache | QuickLRU |
+| :--- | :--- | :--- | :--- |
+| **Hit Rate** | 78.30% | **100.00%** | **100.00%** |
+| **Throughput** | 9,958,175 ops/sec | 37,327,360 ops/sec | **37,965,072 ops/sec** |
+
 ### Key Characteristics
 
 * **High Eviction Efficiency**: `GenerationalCache` demonstrates strong throughput during high-turnover workloads, maintaining a performance margin compared to standard LRU designs in large-scale eviction scenarios.
 * **Predictable Scalability**: While other libraries may experience performance degradation as cache size increases, `GenerationalCache` maintains consistent throughput due to its generational swap mechanism.
 * **Balanced Read/Write**: It provides stable and competitive performance across all basic operations (`get`, `set`), making it suitable for both read-heavy and write-heavy environments.
-* **Conclusion**: As a developer, I'm more surprised than anyone by these benchmark results.
-  I'm confident in the quality of the library, but benchmark results should probably be taken with a grain of salt :)
+* **Trade-offs**: In cyclic access patterns where the working set is greater than `max / 2` but smaller than `max`, `GenerationalCache` will experience frequent generation swaps and cache misses.
 
 ## License
 
