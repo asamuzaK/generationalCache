@@ -51,6 +51,7 @@
   },
   "scripts": {
     "bench": "node --expose-gc ./benchmark/benchmark.js",
+    "bench:worst": "node --expose-gc ./benchmark/worst-case-benchmark.js",
     "build": "npm run tsc && npm run lint && npm test",
     "lint": "eslint --fix .",
     "test": "c8 --reporter=text mocha --exit test/*.test.js",
