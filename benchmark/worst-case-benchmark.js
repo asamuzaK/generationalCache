@@ -8,7 +8,20 @@ import QuickLRU from 'quick-lru';
 import { LRUCache as MnemonistLRU } from 'mnemonist';
 import { GenerationalCache } from '../src/index.js';
 
-const CACHE_SIZE = 8_192;
+const DEFAULT_CACHE_SIZE = 8192;
+
+// Parse `--size=XXX` from command line arguments
+let CACHE_SIZE = DEFAULT_CACHE_SIZE;
+const sizeArg = process.argv.find(arg => arg.startsWith('--size='));
+if (sizeArg) {
+  const parsedSize = parseInt(sizeArg.split('=')[1], 10);
+  if (!isNaN(parsedSize) && parsedSize > 0) {
+    CACHE_SIZE = parsedSize;
+  } else {
+    console.warn(`\n⚠️ Invalid size argument provided. Falling back to default: ${DEFAULT_CACHE_SIZE}\n`);
+  }
+}
+
 // The Achilles' heel for GenerationalCache:
 // Working set size is greater than max / 2 (4096), but smaller than total max (8192).
 const WORKING_SET_SIZE = 5_000; 
