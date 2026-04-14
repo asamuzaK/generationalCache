@@ -6,8 +6,6 @@
 
 A lightweight, **generational pseudo-LRU (Least Recently Used) cache** with strict maximum size limits.
 
-`GenerationalCache` uses a two-generation strategy (Current and Old) to provide a balance between memory efficiency and high-speed access, making it particularly effective for workloads with frequent evictions.
-
 ## How it Works
 
 `GenerationalCache` maintains two internal `Map` objects: `current` and `old`.

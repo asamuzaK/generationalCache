@@ -31,8 +31,8 @@
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-regexp": "^3.1.0",
     "eslint-plugin-unicorn": "^64.0.0",
-    "globals": "^17.4.0",
-    "lru-cache": "^11.3.3",
+    "globals": "^17.5.0",
+    "lru-cache": "^11.3.5",
     "mitata": "^1.0.34",
     "mnemonist": "^0.40.3",
     "mocha": "^11.7.5",
@@ -61,5 +61,5 @@
   "engines": {
     "node": "^20.19.0 || ^22.12.0 || >=24.0.0"
   },
-  "version": "0.1.0"
+  "version": "1.0.0"
 }
