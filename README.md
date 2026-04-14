@@ -115,12 +115,33 @@ Benchmarks are divided into two states to simulate real-world conditions:
 | **Hit Rate** | 78.30% | **100.00%** | **100.00%** | **100.00%** |
 | **Throughput** | 10,365,916 ops/sec | 40,832,993 ops/sec | 40,950,040 ops/sec | **48,426,150 ops/sec** |
 
-### Key Characteristics
+## Key Characteristics
 
 * **High Eviction Efficiency**: `GenerationalCache` demonstrates strong throughput during high-turnover workloads, maintaining a performance margin compared to standard LRU designs in large-scale eviction scenarios.
 * **Predictable Scalability**: While other libraries may experience performance degradation as cache size increases, `GenerationalCache` maintains consistent throughput due to its generational swap mechanism.
 * **Balanced Read/Write**: It provides stable and competitive performance across all basic operations (`get`, `set`), making it suitable for both read-heavy and write-heavy environments.
-* **Trade-offs**: In cyclic access patterns where the working set is greater than `max / 2` but smaller than `max`, `GenerationalCache` will experience frequent generation swaps and cache misses. To maximize the performance benefits of `GenerationalCache`, it is often better to keep the `max` size small enough to allow some evictions, rather than trying to fit the entire working set.
+* **Trade-offs**: In cyclic access patterns where the working set is greater than `max / 2` but smaller than `max`, `GenerationalCache` will experience frequent generation swaps and cache misses.
+
+## Conclusion: When to Use GenerationalCache
+
+`GenerationalCache` is not a one-size-fits-all solution.
+Its effectiveness depends on the ratio between your **Working Set Size ($W$)** and the **Cache Capacity ($S$)**.
+
+### 1. High-Turnover Environments ($W \ge S$)
+This is the primary use case for `GenerationalCache`.
+When your working set is larger than the cache size, evictions occur constantly.
+* **Use case**: High-traffic APIs, memory-constrained containers, or streaming data where maintaining high system throughput is more critical than a perfect hit rate.
+
+### 2. Over-Provisioned Environments ($S \ge 2W$)
+If you have abundant memory, `GenerationalCache` operates as an ultra-low-overhead "passive" cache.
+* **Use case**: Static master data or "hot" lookups where you want to minimize CPU cycles and maintain consistent sub-microsecond latency without any internal pointer updates.
+
+### Avoid ($S/2 < W < S$)
+Be cautious when your working set is larger than half the cache but smaller than the total capacity.
+In this specific range, a standard LRU might achieve a 100% hit rate, while `GenerationalCache` will experience periodic misses due to generation swaps.
+
+* **For Stability**: Set **$S \ge 2W$** (Eliminate swap misses)
+* **For Throughput**: Set **$S < W$** (Maximize eviction speed)
 
 ## License
 
