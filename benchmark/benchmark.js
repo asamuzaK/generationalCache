@@ -5,6 +5,7 @@
 import { run, bench, group } from 'mitata';
 import { LRUCache } from 'lru-cache';
 import QuickLRU from 'quick-lru';
+import { LRUCache as MnemonistLRU } from 'mnemonist';
 import { GenerationalCache } from '../src/index.js';
 
 const DEFAULT_CACHE_SIZE = 8192;
@@ -35,7 +36,8 @@ const createCaches = () => {
   const caches = {
     Generational: new GenerationalCache(CACHE_SIZE),
     LRUCache: new LRUCache({ max: CACHE_SIZE }),
-    QuickLRU: new QuickLRU({ maxSize: CACHE_SIZE })
+    QuickLRU: new QuickLRU({ maxSize: CACHE_SIZE }),
+    Mnemonist: new MnemonistLRU(CACHE_SIZE)
   };
 
   // Pre-fill caches for Get scenarios
@@ -48,7 +50,7 @@ const createCaches = () => {
 };
 
 // Independent indices for state management
-const idx = { Generational: 0, LRUCache: 0, QuickLRU: 0 };
+const idx = { Generational: 0, LRUCache: 0, QuickLRU: 0, Mnemonist: 0 };
 
 console.log('==================================================');
 console.log(` Benchmark: Size=${CACHE_SIZE.toLocaleString()} | Node=${process.version}`);
@@ -96,6 +98,17 @@ const registerScenario = (scenario) => {
         caches.QuickLRU.set(evictPattern[currentIdx % evictPattern.length], currentIdx);
       }
     }).gc('inner');
+
+    bench('Mnemonist', () => {
+      const currentIdx = idx.Mnemonist++;
+      if (scenario === 'Set') {
+        caches.Mnemonist.set(hitPattern[currentIdx % hitPattern.length], currentIdx);
+      } else if (scenario === 'Get') {
+        return caches.Mnemonist.get(hitPattern[currentIdx % hitPattern.length]);
+      } else if (scenario === 'Eviction') {
+        caches.Mnemonist.set(evictPattern[currentIdx % evictPattern.length], currentIdx);
+      }
+    }).gc('inner');
   });
 
   // 2. Warm State (Standard mitata behavior with optimized JIT)
@@ -132,6 +145,17 @@ const registerScenario = (scenario) => {
         return caches.QuickLRU.get(hitPattern[currentIdx % hitPattern.length]);
       } else if (scenario === 'Eviction') {
         caches.QuickLRU.set(evictPattern[currentIdx % evictPattern.length], currentIdx);
+      }
+    });
+
+    bench('Mnemonist', () => {
+      const currentIdx = idx.Mnemonist++;
+      if (scenario === 'Set') {
+        caches.Mnemonist.set(hitPattern[currentIdx % hitPattern.length], currentIdx);
+      } else if (scenario === 'Get') {
+        return caches.Mnemonist.get(hitPattern[currentIdx % hitPattern.length]);
+      } else if (scenario === 'Eviction') {
+        caches.Mnemonist.set(evictPattern[currentIdx % evictPattern.length], currentIdx);
       }
     });
   });

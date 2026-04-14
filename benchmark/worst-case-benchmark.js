@@ -5,6 +5,7 @@
 import { run, bench, group } from 'mitata';
 import { LRUCache } from 'lru-cache';
 import QuickLRU from 'quick-lru';
+import { LRUCache as MnemonistLRU } from 'mnemonist';
 import { GenerationalCache } from '../src/index.js';
 
 const CACHE_SIZE = 8_192;
@@ -19,7 +20,8 @@ const createCaches = () => {
   return {
     Generational: new GenerationalCache(CACHE_SIZE),
     LRUCache: new LRUCache({ max: CACHE_SIZE }),
-    QuickLRU: new QuickLRU({ maxSize: CACHE_SIZE })
+    QuickLRU: new QuickLRU({ maxSize: CACHE_SIZE }),
+    Mnemonist: new MnemonistLRU(CACHE_SIZE)
   };
 };
 
@@ -53,7 +55,7 @@ for (const [name, cache] of Object.entries(simCaches)) {
 console.log('\n');
 
 // --- 2. Throughput Benchmark ---
-const idx = { Generational: 0, LRUCache: 0, QuickLRU: 0 };
+const idx = { Generational: 0, LRUCache: 0, QuickLRU: 0, Mnemonist: 0 };
 
 group('Worst-Case: Cyclic Access (Miss Penalty Included)', () => {
   const caches = createCaches();
@@ -87,6 +89,14 @@ group('Worst-Case: Cyclic Access (Miss Penalty Included)', () => {
     const key = keys[currentIdx % WORKING_SET_SIZE];
     if (caches.QuickLRU.get(key) === undefined) {
       caches.QuickLRU.set(key, 'val');
+    }
+  });
+
+  bench('Mnemonist', () => {
+    const currentIdx = idx.Mnemonist++;
+    const key = keys[currentIdx % WORKING_SET_SIZE];
+    if (caches.Mnemonist.get(key) === undefined) {
+      caches.Mnemonist.set(key, 'val');
     }
   });
 });

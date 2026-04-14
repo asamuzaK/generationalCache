@@ -34,6 +34,7 @@
     "globals": "^17.4.0",
     "lru-cache": "^11.3.3",
     "mitata": "^1.0.34",
+    "mnemonist": "^0.40.3",
     "mocha": "^11.7.5",
     "neostandard": "^0.13.0",
     "prettier": "^3.8.2",
