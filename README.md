@@ -113,12 +113,18 @@ Benchmarks are divided into two states to simulate real-world conditions:
 | **Hit Rate** | 78.30% | **100.00%** | **100.00%** | **100.00%** |
 | **Throughput** | 10,365,916 ops/sec | 40,832,993 ops/sec | 40,950,040 ops/sec | **48,426,150 ops/sec** |
 
+### 5. Cyclic Access (Max Size = 4,096 / Working Set = 5,000)
+| Metric | **GenerationalCache** | LRUCache | QuickLRU | Mnemonist |
+| :--- | :--- | :--- | :--- | :--- |
+| **Hit Rate** | 18.06% | 18.06% | **99.98%** | 18.06% |
+| **Throughput** | **13,192,612 ops/sec** | 9,672,115 ops/sec | 10,188,487 ops/sec | 7,564,868 ops/sec |
+
 ## Key Characteristics
 
 * **High Eviction Efficiency**: `GenerationalCache` demonstrates strong throughput during high-turnover workloads, maintaining a performance margin compared to standard LRU designs in large-scale eviction scenarios.
 * **Predictable Scalability**: While other libraries may experience performance degradation as cache size increases, `GenerationalCache` maintains consistent throughput due to its generational swap mechanism.
 * **Balanced Read/Write**: It provides stable and competitive performance across all basic operations (`get`, `set`), making it suitable for both read-heavy and write-heavy environments.
-* **Trade-offs**: In cyclic access patterns where the working set is greater than `max / 2` but smaller than `max`, `GenerationalCache` will experience frequent generation swaps and cache misses. To maximize the performance benefits of `GenerationalCache`, it is often better to keep the `max` size small enough to allow some evictions, rather than trying to fit the entire working set.
+* **Trade-offs**: In cyclic access patterns where the working set is greater than `max / 2` but smaller than `max`, `GenerationalCache` will experience frequent generation swaps and cache misses. To maximize the performance benefits of `GenerationalCache`, it is often better to keep the `max` size small enough to allow some evictions, rather than trying to fit the entire working set (See 4 & 5).
 
 ## License
 
