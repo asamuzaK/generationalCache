@@ -9,6 +9,7 @@ import { LRUCache as MnemonistLRU } from 'mnemonist';
 import { GenerationalCache } from '../src/index.js';
 
 const DEFAULT_CACHE_SIZE = 8192;
+const DEFAULT_WORKING_SET_SIZE = 5000;
 
 // Parse `--size=XXX` from command line arguments
 let CACHE_SIZE = DEFAULT_CACHE_SIZE;
@@ -22,12 +23,22 @@ if (sizeArg) {
   }
 }
 
-// The Achilles' heel for GenerationalCache:
-// Working set size is greater than max / 2 (4096), but smaller than total max (8192).
-const WORKING_SET_SIZE = 5_000; 
+// Parse `--works=XXX` from command line arguments
+let WORKING_SET_SIZE = DEFAULT_WORKING_SET_SIZE;
+const worksArg = process.argv.find(arg => arg.startsWith('--works='));
+if (worksArg) {
+  const parsedWorks = parseInt(worksArg.split('=')[1], 10);
+  if (!isNaN(parsedWorks) && parsedWorks > 0) {
+    WORKING_SET_SIZE = parsedWorks;
+  } else {
+    console.warn(`\n⚠️ Invalid works argument provided. Falling back to default: ${DEFAULT_WORKING_SET_SIZE}\n`);
+  }
+}
+
 const SIMULATION_OPS = 100_000;
 
-const keys = Array.from({ length: CACHE_SIZE }, (_, i) => `key-${i}`);
+// Generate keys based on the larger of the two sizes to avoid undefined keys
+const keys = Array.from({ length: Math.max(CACHE_SIZE, WORKING_SET_SIZE) }, (_, i) => `key-${i}`);
 
 const createCaches = () => {
   return {
