@@ -14,7 +14,7 @@ A lightweight, **generational pseudo-LRU (Least Recently Used) cache** with stri
 2.  **Promotion**: If you `get` an item that exists in the `old` generation, it is promoted to the `current` generation to ensure it stays in the cache longer.
 3.  **Generation Swapping**: Once the `current` generation reaches the boundary size ($max / 2$), the `old` generation is discarded, the `current` generation becomes the `old` generation, and a new empty `current` generation is created.
 
-This "pseudo-LRU" approach avoids the overhead of updating timestamps or complex linked list pointers on every single access.
+This "pseudo-LRU" approach avoids the overhead of updating timestamps or linked list pointers on every access. While not a drop-in replacement for standard LRU caches, it prioritizes raw throughput over strict eviction ordering.
 
 ## Installation
 ```bash
