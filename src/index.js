@@ -45,7 +45,7 @@ export class GenerationalCache {
    * @param {number} value - The new maximum capacity to set.
    */
   set max(value) {
-    if (Number.isFinite(value) && value > 4) {
+    if (Number.isFinite(value) && value >= 4) {
       this.#max = value;
       this.#boundary = Math.ceil(value / 2);
     } else {
