@@ -12,17 +12,17 @@ A lightweight, **generational pseudo-LRU (Least Recently Used) cache** with stri
 
 1.  **Insertion**: New items are always added to the `current` generation.
 2.  **Promotion**: If you `get` an item that exists in the `old` generation, it is promoted to the `current` generation to ensure it stays in the cache longer.
-3.  **Generation Swapping**: Once the `current` generation reaches the boundary size ($max / 2$), the `old` generation is discarded, the `current` generation becomes the `old` generation, and a new empty `current` generation is created.
+3.  **Generation Swapping**: Once the `current` generation's size meets or exceeds the boundary threshold ($max / 2$), a generation swap is triggered: the existing `old` generation is discarded, the `current` generation becomes the new `old` generation, and a new empty `current` generation is created.
 
 This "pseudo-LRU" approach avoids the overhead of updating timestamps or linked list pointers on every access. While not a drop-in replacement for standard LRU caches, it prioritizes raw throughput over strict eviction ordering.
 
 ## Installation
-```bash
+``` console
 npm i @asamuzakjp/generational-cache
 ```
 
 ## Usage
-```javascript
+``` javascript
 import { GenerationalCache } from '@asamuzakjp/generational-cache';
 
 // Initialize with a max capacity of 1024 items
@@ -40,21 +40,22 @@ Creates a new cache instance.
 
 ### Properties
 
-* **`cache.size`** *(number, read-only)*: Returns the total number of *entries* currently in the cache.
-  **Note:** To optimize for write speed, this library allows temporary key duplication between generations.
-  Therefore, this value may not always reflect the exact count of unique *keys*.
+* **`cache.size`** *(number, read-only)*: Returns the total number of underlying *entries* currently stored across both generations.
+  **Note:** To maximize write throughput, this library allows temporary key duplication between the `current` and `old` generations (e.g., when an item exists in both generations simultaneously). Consequently, this value represents the combined internal map sizes and **may temporarily be higher than the actual number of unique keys**.
+
 * **`cache.max`** *(number)*: Gets or sets the maximum capacity.
-  **Note:** Updating this property dynamically will invoke `cache.clear()` to safely recalculate boundaries.
+  **Note:** Updating this property dynamically **will clear all existing cached items** (it implicitly invokes `cache.clear()` to safely recalculate boundaries).
 
 ### Methods
 
 * **`cache.get(key)`**
   Retrieves an item.
   If the item is found in the older generation, it is automatically promoted to the current generation to prevent it from being evicted during the next swap.
-    * **Returns:** The value associated with the key, or `undefined`.
+    * **Returns** *(V | undefined)*: The value associated with the key, or `undefined` if the key is not found.
 * **`cache.set(key, value)`**
-  Adds or updates an item. If adding this item pushes the current generation's size to the boundary threshold (`max / 2`), a generation swap is triggered, and the old generation is discarded.
-    * **Returns:** The cache instance itself (allows chaining).
+  Adds or updates an item. If this operation causes the `current` generation's size to meet or exceed the boundary threshold, a generation swap is triggered.
+    * **Note:** Storing `undefined` as a value is not supported, as `cache.get(key)` treats `undefined` as a cache miss.
+    * **Returns**: The cache instance itself (allows chaining).
 * **`cache.has(key)`**
   Checks if a key exists in the cache (in either generation).
     * **Returns:** `true` if the key exists, otherwise `false`.
@@ -62,7 +63,7 @@ Creates a new cache instance.
   Removes an item from the cache.
     * **Returns:** `true` if the item existed and was removed, otherwise `false`.
 * **`cache.clear()`**
-  Empties all items from the cache by dropping references to the internal Maps.
+  Empties all items from the cache.
 
 ## Performance
 

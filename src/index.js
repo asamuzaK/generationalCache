@@ -79,7 +79,7 @@ export class GenerationalCache {
   /**
    * Adds or updates an element with a specified key and a value to the cache.
    * @param {K} key - The key of the element to add.
-   * @param {V} value - The value of the element to add.
+   * @param {V} value - The value of the element to add (must not be undefined).
    * @returns {GenerationalCache} The cache object itself.
    */
   set(key, value) {
@@ -93,8 +93,7 @@ export class GenerationalCache {
   }
 
   /**
-   * Returns a boolean indicating whether an element with the specified key
-   * exists or not.
+   * Returns a boolean indicating whether the specified key exists or not.
    * @param {K} key - The key of the element to test for presence.
    * @returns {boolean} true if an element with the specified key exists in the
    * cache; otherwise false.
