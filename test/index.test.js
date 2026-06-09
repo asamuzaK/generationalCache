@@ -58,7 +58,7 @@ describe('GenerationalCache', () => {
 
     it('should prevent storing undefined (by design for optimization)', () => {
       cache.set('a', undefined);
-      assert.strictEqual(cache.size(), 0);
+      assert.strictEqual(cache.size, 0);
     });
 
     it('should check the existence of a key using has()', () => {
