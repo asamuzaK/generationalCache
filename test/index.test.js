@@ -56,10 +56,9 @@ describe('GenerationalCache', () => {
       assert.strictEqual(cache.get('b'), undefined);
     });
 
-    it('should treat storing undefined as a cache miss (by design for optimization)', () => {
+    it('should prevent storing undefined (by design for optimization)', () => {
       cache.set('a', undefined);
-      assert.strictEqual(cache.get('a'), undefined);
-      // Even if set, it won't be retrievable as a valid hit
+      assert.strictEqual(cache.size, 0);
     });
 
     it('should check the existence of a key using has()', () => {

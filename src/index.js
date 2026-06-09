@@ -83,6 +83,9 @@ export class GenerationalCache {
    * @returns {GenerationalCache} The cache object itself.
    */
   set(key, value) {
+    if (value === undefined) {
+      return this;
+    }
     this.#current.set(key, value);
     // Swap generations if the current map reaches the boundary
     if (this.#current.size >= this.#boundary) {
