@@ -121,7 +121,8 @@ export class GenerationalCache {
    * Removes all elements from the cache.
    */
   clear() {
-    this.#current.clear();
-    this.#old.clear();
+    this.#current = new Map();
+    this.#old = new Map();
   }
+
 }
