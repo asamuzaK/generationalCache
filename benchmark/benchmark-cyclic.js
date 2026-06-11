@@ -1,5 +1,5 @@
 /**
- * worst-case-benchmark.js (powered by mitata)
+ * benchmark-worst-case.js (powered by mitata)
  */
 
 import { run, bench, group } from 'mitata';

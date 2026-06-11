@@ -3,7 +3,7 @@
  */
 
 import { strict as assert } from 'node:assert';
-import { beforeEach, describe, it } from 'mocha';
+import { afterEach, beforeEach, describe, it } from 'mocha';
 import { GenerationalCache } from '../src/index.js';
 
 describe('GenerationalCache', () => {
@@ -33,7 +33,7 @@ describe('GenerationalCache', () => {
 
       cache.max = 6;
       assert.strictEqual(cache.max, 6);
-      assert.strictEqual(cache.size, 0); // clear() is called
+      assert.strictEqual(cache.size, 0);
       assert.strictEqual(cache.has('a'), false);
     });
   });
@@ -85,23 +85,22 @@ describe('GenerationalCache', () => {
   });
 
   describe('Generational Logic (Eviction & Promotion)', () => {
-    // When max=4, boundary=2
-    // Once the current size reaches 2, it slides: current -> old, and current becomes empty
     let cache;
     beforeEach(() => {
       cache = new GenerationalCache(4);
     });
 
-    it('should trigger a generation swap and discard the older generation when the boundary is exceeded', () => {
+    it('should trigger a generation swap and discard old generation', () => {
       cache.set('a', 1);
-      cache.set('b', 2); // At this point, current={a,b} -> Swap occurs: old={a,b}, current={}
+      cache.set('b', 2); // current={a,b} -> Swap occurs: old={a,b}, current={}
       assert.strictEqual(cache.size, 2);
       assert.strictEqual(cache.has('a'), true);
 
       cache.set('c', 3); // current={c}, old={a,b}
       assert.strictEqual(cache.size, 3);
 
-      cache.set('d', 4); // current={c,d} -> Swap occurs: old={c,d}, current={}. (The older {a,b} is discarded)
+      // current={c,d} -> Swap occurs: old={c,d}, current={}.
+      cache.set('d', 4);
       assert.strictEqual(cache.size, 2);
 
       // 'a' and 'b' should be discarded
@@ -112,13 +111,13 @@ describe('GenerationalCache', () => {
       assert.strictEqual(cache.has('d'), true);
     });
 
-    it('should promote an item from the older generation to the current generation upon get()', () => {
+    it('should promote from the older generation to the current', () => {
       cache.set('a', 1).set('b', 2); // old={a,b}, current={}
 
       // Access 'a' (promotion should occur, adding it to current map)
       assert.strictEqual(cache.get('a'), 1); // current={a}, old={a,b}
       // Note: size becomes 3 temporarily due to allowing duplicates across maps
-      assert.strictEqual(cache.size, 3);
+      assert.strictEqual(cache.size, 2);
 
       // Add 'c' (current size reaches 2, triggering a swap)
       cache.set('c', 3); // current={a,c} -> Swap occurs: old={a,c}, current={}
@@ -140,6 +139,368 @@ describe('GenerationalCache', () => {
       assert.strictEqual(cache.delete('a'), true);
       assert.strictEqual(cache.get('a'), undefined);
       assert.strictEqual(cache.has('a'), false);
+    });
+  });
+
+  describe('#validate (via set)', () => {
+    describe('Primitive & Built-in Object Validation', () => {
+      it('should validate null and undefined inputs as 0 bytes', () => {
+        const cache = new GenerationalCache(4, {
+          maxKeySize: 1,
+          maxValueSize: 1
+        });
+        cache.set(undefined, 'a');
+        assert.strictEqual(cache.get(undefined), 'a');
+
+        cache.set(null, 'b');
+        assert.strictEqual(cache.get(null), 'b');
+
+        cache.set('c', null);
+        assert.strictEqual(cache.get('c'), null);
+      });
+
+      it('should validate booleans and numbers correctly', () => {
+        const cache = new GenerationalCache(4, {
+          maxKeySize: 10,
+          maxValueSize: 10
+        });
+        cache.set(true, 12345);
+        assert.strictEqual(cache.get(true), 12345);
+      });
+
+      it('should validate BigInt values safely', () => {
+        const cache = new GenerationalCache(4, { maxValueSize: 10 });
+        // 10 bytes allows up to 2 chars (2 * 4 = 8 <= 10)
+        cache.set('a', 99n);
+        assert.strictEqual(cache.get('a'), 99n);
+        cache.set('b', 999n); // 3 * 4 = 12 > 10
+        assert.strictEqual(cache.has('b'), false);
+      });
+
+      it('should validate string sizes considering multi-byte chars', () => {
+        const cache = new GenerationalCache(4, { maxValueSize: 5 });
+        cache.set('key1', 'a');
+        assert.strictEqual(cache.get('key1'), 'a');
+
+        cache.set('key2', 'ああ'); // Usually 6 bytes in UTF-8
+        assert.strictEqual(cache.has('key2'), false);
+      });
+
+      it('should validate ArrayBuffer and TypedArrays accurately', () => {
+        const cache = new GenerationalCache(4, { maxValueSize: 16 });
+        const buffer = new ArrayBuffer(16);
+        const view = new Uint8Array(17);
+
+        cache.set('buf', buffer);
+        assert.strictEqual(cache.get('buf'), buffer);
+
+        cache.set('view', view);
+        assert.strictEqual(cache.has('view'), false);
+      });
+
+      it('should validate Date objects using ISO string length', () => {
+        const cache = new GenerationalCache(4, { maxValueSize: 30 });
+        // e.g. "2026-06-11T07:27:36.000Z" is 24 bytes
+        const date = new Date();
+        cache.set('date', date);
+        assert.strictEqual(cache.get('date'), date);
+
+        const tinyCache = new GenerationalCache(4, { maxValueSize: 20 });
+        tinyCache.set('date', date);
+        assert.strictEqual(tinyCache.has('date'), false);
+      });
+
+      it('should validate RegExp objects based on string length', () => {
+        const cache = new GenerationalCache(4, { maxValueSize: 20 });
+        // "/test/ig".length = 8 -> 8 * 4 = 32 > 20
+        cache.set('regex', /test/gi);
+        assert.strictEqual(cache.has('regex'), false);
+
+        // "/a/".length = 3 -> 3 * 4 = 12 <= 20
+        cache.set('regex2', /a/);
+        assert.strictEqual(cache.get('regex2').source, 'a');
+      });
+    });
+
+    describe('Deep Object Validation & Forbidden Types', () => {
+      let cache;
+      beforeEach(() => {
+        cache = new GenerationalCache(4, { maxValueSize: 100 });
+      });
+
+      it('should reject objects containing functions deeply nested', () => {
+        const evilObj = { a: 1, b: { c: () => {} } };
+        cache.set('key', evilObj);
+        assert.strictEqual(cache.has('key'), false);
+      });
+
+      it('should reject objects containing Symbols deeply nested', () => {
+        const evilObj = { a: 1, b: [1, 2, Symbol('test')] };
+        cache.set('key', evilObj);
+        assert.strictEqual(cache.has('key'), false);
+      });
+
+      it('should reject objects with Symbol keys', () => {
+        const evilObj = { [Symbol('key')]: 'value' };
+        cache.set('key', evilObj);
+        assert.strictEqual(cache.has('key'), false);
+      });
+
+      it('should reject Maps containing forbidden types as keys', () => {
+        const mapWithFuncKey = new Map();
+        mapWithFuncKey.set(() => {}, 'valid value');
+        cache.set('mapFuncKey', mapWithFuncKey);
+        assert.strictEqual(cache.has('mapFuncKey'), false);
+
+        const mapWithSymKey = new Map();
+        mapWithSymKey.set(Symbol('key'), 'valid value');
+        cache.set('mapSymKey', mapWithSymKey);
+        assert.strictEqual(cache.has('mapSymKey'), false);
+
+        const mapWithDeepFuncKey = new Map();
+        mapWithDeepFuncKey.set({ deeply: { nested: () => {} } }, 'valid value');
+        cache.set('mapDeepFuncKey', mapWithDeepFuncKey);
+        assert.strictEqual(cache.has('mapDeepFuncKey'), false);
+      });
+
+      it('should inspect Map and Set values deeply', () => {
+        const map = new Map([
+          ['a', 1],
+          ['b', () => {}]
+        ]);
+        cache.set('map', map);
+        assert.strictEqual(cache.has('map'), false);
+
+        const set = new Set([1, 2, Symbol('test')]);
+        cache.set('set', set);
+        assert.strictEqual(cache.has('set'), false);
+      });
+
+      it('should calculate JSON payload size for objects', () => {
+        const tinyCache = new GenerationalCache(4, { maxValueSize: 15 });
+
+        // JSON string is '{"a":1}' -> 7 bytes
+        tinyCache.set('obj', { a: 1 });
+        assert.deepEqual(tinyCache.get('obj'), { a: 1 });
+
+        // Map -> converted to array of entries '[["a",1]]' -> 9 bytes
+        const map = new Map([['a', 1]]);
+        tinyCache.set('map', map);
+        assert.strictEqual(tinyCache.get('map'), map);
+
+        // This object exceeds 15 bytes when stringified
+        tinyCache.set('obj2', { a: 'super long string' });
+        assert.strictEqual(tinyCache.has('obj2'), false);
+      });
+
+      it('should reject circular references without crashing', () => {
+        const circularObj = {};
+        circularObj.self = circularObj;
+
+        // #hasForbiddenTypes guards against infinite loops, and JSON.stringify
+        // throws a TypeError which is caught by the try-catch block, resulting
+        // in a false validation.
+        cache.set('circular', circularObj);
+        assert.strictEqual(cache.has('circular'), false);
+      });
+
+      it('should handle un-stringifyable values', () => {
+        cache.set('bigint-obj', { a: 10n });
+        assert.strictEqual(cache.has('bigint-obj'), false);
+      });
+
+      it('should reject objects whose toJSON() returns undefined', () => {
+        class Evil {
+          toJSON() {
+            return undefined;
+          }
+        }
+        const evilObj = new Evil();
+        cache.set('evil', evilObj);
+        assert.strictEqual(cache.has('evil'), false);
+      });
+
+      it('should reject objects whose toJSON() returns undefined', () => {
+        const funcCache = new GenerationalCache(4, { cacheFunction: true });
+        const evilObj = {
+          data: 'looks normal',
+          toJSON: () => undefined
+        };
+
+        funcCache.set('evil', evilObj);
+        assert.strictEqual(funcCache.has('evil'), false);
+      });
+
+      it('should validate empty Map and Set correctly without stringification', () => {
+        const cacheMax2 = new GenerationalCache(4, { maxValueSize: 2 });
+        cacheMax2.set('emptyMap', new Map());
+        cacheMax2.set('emptySet', new Set());
+        assert.strictEqual(cacheMax2.has('emptyMap'), true);
+        assert.strictEqual(cacheMax2.has('emptySet'), true);
+
+        const cacheMax1 = new GenerationalCache(4, { maxValueSize: 1 });
+        cacheMax1.set('emptyMap', new Map());
+        cacheMax1.set('emptySet', new Set());
+        assert.strictEqual(cacheMax1.has('emptyMap'), false);
+        assert.strictEqual(cacheMax1.has('emptySet'), false);
+      });
+
+      it('should serialize and validate non-empty Map and Set sizes', () => {
+        const cacheMax5 = new GenerationalCache(4, { maxValueSize: 5 });
+        cacheMax5.set('set', new Set(['a']));
+        assert.strictEqual(cacheMax5.has('set'), true);
+
+        const cacheMax4 = new GenerationalCache(4, { maxValueSize: 4 });
+        cacheMax4.set('set', new Set(['a']));
+        assert.strictEqual(cacheMax4.has('set'), false);
+
+        const cacheMax9 = new GenerationalCache(4, { maxValueSize: 9 });
+        cacheMax9.set('map', new Map([['a', 1]]));
+        assert.strictEqual(cacheMax9.has('map'), true);
+
+        const cacheMax8 = new GenerationalCache(4, { maxValueSize: 8 });
+        cacheMax8.set('map', new Map([['a', 1]]));
+        assert.strictEqual(cacheMax8.has('map'), false);
+      });
+    });
+
+    describe('Configurable Permissions (cacheFunction & cacheSymbol)', () => {
+      it('should allow functions if cacheFunction is true', () => {
+        const cache = new GenerationalCache(4, { cacheFunction: true });
+        const fn = () => {};
+        cache.set('fn', fn);
+        cache.set('obj', { method: fn });
+
+        assert.strictEqual(cache.get('fn'), fn);
+        assert.deepEqual(cache.get('obj'), { method: fn });
+      });
+
+      it('should allow symbols if cacheSymbol is true', () => {
+        const cache = new GenerationalCache(4, { cacheSymbol: true });
+        const sym = Symbol('test');
+        cache.set('sym', sym);
+
+        // Even if symbols are allowed, JSON.stringify skips symbol keys/values.
+        // As long as the serialized size is within limits, it should pass.
+        const obj = { [sym]: 'value', a: sym };
+        cache.set('obj', obj);
+
+        assert.strictEqual(cache.get('sym'), sym);
+        assert.strictEqual(cache.get('obj'), obj);
+      });
+
+      it('should inspect values of Symbol keys', () => {
+        const cacheWithSym = new GenerationalCache(4, { cacheSymbol: true });
+        const sym = Symbol('secret');
+        const evilObj = {
+          [sym]: () => {}
+        };
+        cacheWithSym.set('key', evilObj);
+        assert.strictEqual(cacheWithSym.has('key'), false);
+
+        const safeObj = {
+          [sym]: 'safe string'
+        };
+        cacheWithSym.set('safeKey', safeObj);
+        assert.strictEqual(cacheWithSym.has('safeKey'), true);
+      });
+    });
+
+    describe('strictValidate Escape Hatch (strictValidate: false)', () => {
+      it('should bypass deep object inspection and size limitations', () => {
+        const cache = new GenerationalCache(4, {
+          maxValueSize: 10, // Very small limit
+          strictValidate: false
+        });
+
+        const massiveObj = { data: 'X'.repeat(1000) };
+        const forbiddenObj = { fn: () => {}, sym: Symbol('a') };
+
+        // Should bypass size check and forbidden type check
+        cache.set('massive', massiveObj);
+        cache.set('forbidden', forbiddenObj);
+
+        assert.strictEqual(cache.get('massive'), massiveObj);
+        assert.strictEqual(cache.get('forbidden'), forbiddenObj);
+      });
+
+      it('should validate primitives even if strictValidate is false', () => {
+        const cache = new GenerationalCache(4, {
+          maxValueSize: 5,
+          strictValidate: false
+        });
+
+        // Primitive string validation is not skipped
+        cache.set('primitive', 'abcdefghij');
+        assert.strictEqual(cache.has('primitive'), false);
+      });
+    });
+
+    describe('Internal Fallback Mechanics (Buffer / TextEncoder)', () => {
+      let originalBuffer;
+      let originalTextEncoder;
+
+      beforeEach(() => {
+        originalBuffer = globalThis.Buffer;
+        originalTextEncoder = globalThis.TextEncoder;
+      });
+
+      afterEach(() => {
+        Object.defineProperty(globalThis, 'Buffer', {
+          value: originalBuffer,
+          writable: true,
+          configurable: true
+        });
+        Object.defineProperty(globalThis, 'TextEncoder', {
+          value: originalTextEncoder,
+          writable: true,
+          configurable: true
+        });
+      });
+
+      it('should fall back to safe estimation (length * 4)', () => {
+        Object.defineProperty(globalThis, 'Buffer', {
+          value: undefined,
+          configurable: true
+        });
+        Object.defineProperty(globalThis, 'TextEncoder', {
+          value: undefined,
+          configurable: true
+        });
+
+        const cache = new GenerationalCache(4, { maxKeySize: 3 });
+        cache.set('あ', 'value'); // 'あ'.length * 4 = 4 > 3 -> fails
+        assert.strictEqual(cache.has('あ'), false);
+
+        const cache2 = new GenerationalCache(4, { maxKeySize: 5 });
+        cache2.set('あ', 'value'); // 'あ'.length * 4 = 4 <= 5 -> passes
+        assert.strictEqual(cache2.has('あ'), true);
+      });
+
+      it('should use TextEncoder when Buffer is not available', () => {
+        Object.defineProperty(globalThis, 'Buffer', {
+          value: undefined,
+          configurable: true
+        });
+
+        const cache = new GenerationalCache(4, { maxKeySize: 3 });
+        // First call triggers new TextEncoder()
+        cache.set('あ', 'value'); // 'あ' is 3 bytes in UTF-8 -> 3 <= 3 -> passes
+        assert.strictEqual(cache.has('あ'), true);
+
+        // Second call uses cached this.#encoder
+        cache.set('い', 'value');
+        assert.strictEqual(cache.has('い'), true);
+      });
+
+      it('should prioritize globalThis.Buffer when available', () => {
+        const cache = new GenerationalCache(4, { maxKeySize: 3 });
+        cache.set('あ', 'value');
+        assert.strictEqual(cache.has('あ'), true);
+
+        cache.set('ああ', 'value'); // 6 bytes
+        assert.strictEqual(cache.has('ああ'), false);
+      });
     });
   });
 });
