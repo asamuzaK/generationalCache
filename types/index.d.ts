@@ -1,5 +1,11 @@
 export class GenerationalCache<K, V> {
-    constructor(max: number);
+    constructor(maxItems: number, opt?: {
+        cacheFunction?: boolean | undefined;
+        cacheSymbol?: boolean | undefined;
+        maxKeySize?: number | undefined;
+        maxValueSize?: number | undefined;
+        strictValidate?: boolean | undefined;
+    });
     set max(value: number);
     get max(): number;
     get size(): number;
