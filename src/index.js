@@ -299,8 +299,8 @@ export class GenerationalCache {
     if (value === undefined) {
       return undefined;
     }
-    this.#promote(key, value);
     this.#old.delete(key);
+    this.#promote(key, value);
     return value;
   }
 
