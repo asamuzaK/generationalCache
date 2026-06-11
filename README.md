@@ -124,23 +124,23 @@ Benchmarks are divided into two states to simulate real-world conditions:
 
 | Scenario | State | GenerationalCache | LRUCache | QuickLRU | Mnemonist |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| **Set** | Cold | 374,531 ops/sec | 1,214,978 ops/sec | 4,452,161 ops/sec | **5,354,465 ops/sec** |
-| | Warm | 518,134 ops/sec | 3,598,157 ops/sec | 8,514,986 ops/sec | **10,217,635 ops/sec** |
-| **Get** | Cold | **7,426,661 ops/sec** | 14,819 ops/sec | 4,451,368 ops/sec | 6,655,574 ops/sec |
-| | Warm | 15,342,129 ops/sec | 12,310,722 ops/sec | 9,823,182 ops/sec | **21,240,441 ops/sec** |
-| **Eviction** | Cold | 378,787 ops/sec | 1,947,571 ops/sec | **5,031,700 ops/sec** | 1,100,666 ops/sec |
+| **Set** | Cold | 374,531 ops/sec | 1,292,758 ops/sec | 4,452,161 ops/sec | **5,354,465 ops/sec** |
+| | Warm | 518,134 ops/sec | 7,691,124 ops/sec | 8,514,986 ops/sec | **10,217,635 ops/sec** |
+| **Get** | Cold | **7,426,661 ops/sec** | 4,289,268 ops/sec | 4,451,368 ops/sec | 6,655,574 ops/sec |
+| | Warm | 15,342,129 ops/sec | 13,590,649 ops/sec | 9,823,182 ops/sec | **21,240,441 ops/sec** |
+| **Eviction** | Cold | 378,787 ops/sec | 1,824,500 ops/sec | **5,031,700 ops/sec** | 1,100,666 ops/sec |
 | | Warm | 529,100 ops/sec | 4,524,272 ops/sec | **7,826,563 ops/sec** | 4,026,251 ops/sec |
 
 ### 5. Non-Primitive Payload (Max Size = 8,192 / strictValidate = false)
 
 | Scenario | State | GenerationalCache | LRUCache | QuickLRU | Mnemonist |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| **Set** | Cold | **6,328,312 ops/sec** | 11,055 ops/sec | 5,003,752 ops/sec | 5,304,476 ops/sec |
-| | Warm | 9,648,784 ops/sec | 7,137,758 ops/sec | 8,040,524 ops/sec | **10,378,827 ops/sec** |
-| **Get** | Cold | 6,740,361 ops/sec | 4,289,268 ops/sec | 4,405,092 ops/sec | **7,171,543 ops/sec** |
-| | Warm | 14,898,688 ops/sec | 12,648,621 ops/sec | 9,323,140 ops/sec | **21,748,586 ops/sec** |
-| **Eviction** | Cold | **5,552,470 ops/sec** | 35,803 ops/sec | 4,745,859 ops/sec | 1,126,494 ops/sec |
-| | Warm | **10,757,314 ops/sec** | 2,863,606 ops/sec | 9,266,123 ops/sec | 4,500,450 ops/sec |
+| **Set** | Cold | **6,328,312 ops/sec** | 1,317,592 ops/sec | 5,003,752 ops/sec | 5,304,476 ops/sec |
+| | Warm | 9,648,784 ops/sec | 8,122,817 ops/sec | 8,040,524 ops/sec | **10,378,827 ops/sec** |
+| **Get** | Cold | 6,740,361 ops/sec | 4,473,472 ops/sec | 4,405,092 ops/sec | **7,171,543 ops/sec** |
+| | Warm | 14,898,688 ops/sec | 13,674,278 ops/sec | 9,323,140 ops/sec | **21,748,586 ops/sec** |
+| **Eviction** | Cold | **5,552,470 ops/sec** | 1,947,571 ops/sec | 4,745,859 ops/sec | 1,126,494 ops/sec |
+| | Warm | **10,757,314 ops/sec** | 4,898,119 ops/sec | 9,266,123 ops/sec | 4,500,450 ops/sec |
 
 ### 6. Cyclic Access (Max Size = 8,192 / Working Set = 5,000)
 
