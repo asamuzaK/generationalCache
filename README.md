@@ -43,6 +43,8 @@ Creates a new cache instance.
 
 * **max** *(number)*: The maximum number of items the cache can hold. If the specified value is less than 4, or if an invalid value is specified, the default value of 4 will be used.
 * **opt** *(object, optional)*:
+  * **cacheFunction** *(boolean)*: Caches functions if `true`. Defaults to `false`.
+  * **cacheSymbol** *(boolean)*: Caches symbols if `true`. Defaults to `false`.
   * **maxKeySize** *(number)*: Maximum allowed size for a `key` in bytes. Defaults to 8192 (8 KB).
   * **maxValueSize** *(number)*: Maximum allowed size for a `value` in bytes. Defaults to 8388608 (8 MB).
   * **strictValidate** *(boolean)*: Strictly validate object payload structures and sizes if `true`. Defaults to `true`.
