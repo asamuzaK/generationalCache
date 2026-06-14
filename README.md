@@ -4,17 +4,26 @@
 [![CodeQL](https://github.com/asamuzaK/generationalCache/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/asamuzaK/generationalCache/actions/workflows/github-code-scanning/codeql)
 [![npm (scoped)](https://img.shields.io/npm/v/@asamuzakjp/generational-cache)](https://www.npmjs.com/package/@asamuzakjp/generational-cache)
 
-A lightweight, **generational pseudo-LRU (Least Recently Used) cache** with strict maximum size limits.
+A lightweight, **generational cache** with strict entry-count limits and payload validation.
 
 ## How it Works
 
 `GenerationalCache` maintains two internal `Map` objects: `current` and `old`.
+It uses an internal boundary of ($max / 2$), allowing both generations to remain bounded while keeping generation swaps inexpensive.
 
 1. **Insertion & Validation**: New items are validated against byte size limits before being added to the `current` generation.
 2. **Promotion**: If you get an item that exists in the `old` generation, it is promoted to the `current` generation to ensure it stays in the cache longer.
 3. **Generation Swapping**: Once the `current` generation's size meets or exceeds the boundary threshold ($max / 2$), a generation swap is triggered: the existing `old` generation is discarded, the `current` generation becomes the new `old` generation, and a new empty `current` generation is created.
 
-This "pseudo-LRU" approach avoids the overhead of updating timestamps or linked list pointers on every access. While not a drop-in replacement for standard LRU caches, it prioritizes raw throughput over strict eviction ordering.
+This two-generation approach avoids the overhead of updating timestamps or linked list pointers on every access. While not a drop-in replacement for standard LRU caches, it prioritizes raw throughput over strict eviction ordering.
+
+## When NOT to Use
+
+`GenerationalCache` may not be a good fit when:
+
+* You require strict LRU eviction ordering.
+* Cache hit rate is more important than insertion/eviction throughput.
+* You already know your working set size and can provision a sufficiently large LRU cache.
 
 ## Installation
 
@@ -37,9 +46,9 @@ const cache = new GenerationalCache(1024, {
 
 ## API
 
-### `new GenerationalCache(max)`
+### `new GenerationalCache(max, opt)`
 
-Creates a new cache instance.
+Creates a new cache instance with a maximum capacity of `max` entries.
 
 * **max** *(number)*: The maximum number of items the cache can hold. If the specified value is less than 4, or if an invalid value is specified, the default value of 4 will be used.
 * **opt** *(object, optional)*:
@@ -52,7 +61,7 @@ Creates a new cache instance.
 ### **Properties**
 
 * **cache.size** *(number, read-only)*: Returns the total number of underlying `entries` currently stored across both generations.
-  **Note:** To maximize write throughput, this library allows temporary key duplication between the `current` and `old` generations (e.g., when an item exists in both generations simultaneously). Consequently, this value represents the combined internal map sizes and **may temporarily be higher than the actual number of unique keys**.
+  **Note:** To maximize write throughput, this library allows temporary key duplication between the `current` and `old` generations (e.g., when an item exists in both generations simultaneously). The reported size may exceed the number of unique `keys`, but remains bounded by the cache's internal capacity.
 * **cache.max** *(number)*: Gets or sets the maximum item capacity.
   **Note:** Updating this property dynamically **will clear all existing cached items** (it implicitly invokes cache.clear() to safely recalculate boundaries).
 

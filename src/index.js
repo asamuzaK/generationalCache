@@ -1,6 +1,6 @@
 /**
  * @file generational-cache.js
- * A generational pseudo-LRU cache with strict maximum size limits.
+ * A generational cache with strict entry-count limits and payload validation.
  */
 
 /* constants */

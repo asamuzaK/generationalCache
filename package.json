@@ -1,6 +1,6 @@
 {
   "name": "@asamuzakjp/generational-cache",
-  "description": "A generational pseudo-LRU cache with strict maximum size limits.",
+  "description": "A generational cache  with strict entry-count limits and payload validation.",
   "author": "asamuzaK",
   "license": "MIT",
   "homepage": "https://github.com/asamuzaK/generationalCache",
