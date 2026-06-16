@@ -250,13 +250,13 @@ export class GenerationalCache {
   }
 
   /**
-   * Gets the current number of cached entries.
+   * Gets the total number of cached entries across both generations.
    * @note To optimize for write speed, this library allows temporary key
-   * duplication between generations. Therefore, this value may not always
-   * reflect the exact count of unique `keys`.
+   * duplication between generations. Therefore, this value reflects the total
+   * count of internal entries rather than the exact number of unique keys.
    * @type {number}
    */
-  get size() {
+  get entryCount() {
     return this.#current.size + this.#old.size;
   }
 

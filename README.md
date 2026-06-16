@@ -60,8 +60,10 @@ Creates a new cache instance with a maximum capacity of `max` entries.
 
 ### **Properties**
 
-* **cache.size** *(number, read-only)*: Returns the total number of underlying `entries` currently stored across both generations.
-  **Note:** To maximize write throughput, this library allows temporary key duplication between the `current` and `old` generations (e.g., when an item exists in both generations simultaneously). The reported size may exceed the number of unique `keys`, but remains bounded by the cache's internal capacity.
+### **Properties**
+
+* **cache.entryCount** *(number, read-only)*: Returns the total number of underlying `entries` currently stored across both generations.
+  **Note:** To maximize write throughput, this library allows temporary key duplication between the `current` and `old` generations (e.g., when an item exists in both generations simultaneously). The reported count may exceed the number of unique `keys`, but remains bounded by the cache's internal capacity.
 * **cache.max** *(number)*: Gets or sets the maximum item capacity.
   **Note:** Updating this property dynamically **will clear all existing cached items** (it implicitly invokes cache.clear() to safely recalculate boundaries).
 
