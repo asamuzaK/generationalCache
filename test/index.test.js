@@ -12,7 +12,7 @@ describe('GenerationalCache', () => {
       const cache = new GenerationalCache(10);
       assert.strictEqual(cache.max, 10);
       // boundary = Math.ceil(10 / 2) = 5
-      assert.strictEqual(cache.size, 0);
+      assert.strictEqual(cache.entryCount, 0);
     });
 
     it('should fall back to default values (max: 4, boundary: 2) when an invalid or <= 4 value is provided', () => {
@@ -29,11 +29,11 @@ describe('GenerationalCache', () => {
     it('should clear the cache when the max property is reset', () => {
       const cache = new GenerationalCache(10);
       cache.set('a', 1);
-      assert.strictEqual(cache.size, 1);
+      assert.strictEqual(cache.entryCount, 1);
 
       cache.max = 6;
       assert.strictEqual(cache.max, 6);
-      assert.strictEqual(cache.size, 0);
+      assert.strictEqual(cache.entryCount, 0);
       assert.strictEqual(cache.has('a'), false);
     });
   });
@@ -47,7 +47,7 @@ describe('GenerationalCache', () => {
 
     it('should allow chaining for set()', () => {
       cache.set('a', 1).set('b', 2);
-      assert.strictEqual(cache.size, 2);
+      assert.strictEqual(cache.entryCount, 2);
     });
 
     it('should retrieve the set value using get()', () => {
@@ -58,7 +58,7 @@ describe('GenerationalCache', () => {
 
     it('should prevent storing undefined (by design for optimization)', () => {
       cache.set('a', undefined);
-      assert.strictEqual(cache.size, 0);
+      assert.strictEqual(cache.entryCount, 0);
     });
 
     it('should check the existence of a key using has()', () => {
@@ -71,7 +71,7 @@ describe('GenerationalCache', () => {
       cache.set('a', 1);
       assert.strictEqual(cache.delete('a'), true);
       assert.strictEqual(cache.has('a'), false);
-      assert.strictEqual(cache.size, 0);
+      assert.strictEqual(cache.entryCount, 0);
 
       assert.strictEqual(cache.delete('b'), false); // Non-existent key
     });
@@ -79,7 +79,7 @@ describe('GenerationalCache', () => {
     it('should remove all elements using clear()', () => {
       cache.set('a', 1).set('b', 2);
       cache.clear();
-      assert.strictEqual(cache.size, 0);
+      assert.strictEqual(cache.entryCount, 0);
       assert.strictEqual(cache.has('a'), false);
     });
   });
@@ -93,15 +93,15 @@ describe('GenerationalCache', () => {
     it('should trigger a generation swap and discard old generation', () => {
       cache.set('a', 1);
       cache.set('b', 2); // current={a,b} -> Swap occurs: old={a,b}, current={}
-      assert.strictEqual(cache.size, 2);
+      assert.strictEqual(cache.entryCount, 2);
       assert.strictEqual(cache.has('a'), true);
 
       cache.set('c', 3); // current={c}, old={a,b}
-      assert.strictEqual(cache.size, 3);
+      assert.strictEqual(cache.entryCount, 3);
 
       // current={c,d} -> Swap occurs: old={c,d}, current={}.
       cache.set('d', 4);
-      assert.strictEqual(cache.size, 2);
+      assert.strictEqual(cache.entryCount, 2);
 
       // 'a' and 'b' should be discarded
       assert.strictEqual(cache.has('a'), false);
@@ -115,9 +115,9 @@ describe('GenerationalCache', () => {
       cache.set('a', 1).set('b', 2); // old={a,b}, current={}
 
       // Access 'a' (promotion should occur, adding it to current map)
-      assert.strictEqual(cache.get('a'), 1); // current={a}, old={a,b}
-      // Note: size becomes 3 temporarily due to allowing duplicates across maps
-      assert.strictEqual(cache.size, 2);
+      assert.strictEqual(cache.get('a'), 1); // current={a}, old={b}
+      // Note: entryCount remains 2 as 'a' moves from old to current
+      assert.strictEqual(cache.entryCount, 2);
 
       // Add 'c' (current size reaches 2, triggering a swap)
       cache.set('c', 3); // current={a,c} -> Swap occurs: old={a,c}, current={}
