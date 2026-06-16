@@ -38,9 +38,9 @@ import { GenerationalCache } from '@asamuzakjp/generational-cache';
 
 // Initialize with a max capacity of 1024 items and custom size limits
 const cache = new GenerationalCache(1024, {
-  maxKeySize: 4096,         // 4 KB limit for keys
+  maxKeySize: 4096,          // 4 KB limit for keys
   maxValueSize: 1024 * 1024, // 1 MB limit for values
-  strictValidate: true      // Enable strict deep validation for objects (default)
+  strictValidate: true       // Enable strict deep validation for objects (default)
 });
 ```
 
@@ -58,16 +58,14 @@ Creates a new cache instance with a maximum capacity of `max` entries.
   * **maxValueSize** *(number)*: Maximum allowed size for a `value` in bytes. Defaults to 8388608 (8 MB).
   * **strictValidate** *(boolean)*: Strictly validate object payload structures and sizes if `true`. Defaults to `true`.
 
-### **Properties**
-
-### **Properties**
+### Properties
 
 * **cache.entryCount** *(number, read-only)*: Returns the total number of underlying `entries` currently stored across both generations.
   **Note:** To maximize write throughput, this library allows temporary key duplication between the `current` and `old` generations (e.g., when an item exists in both generations simultaneously). The reported count may exceed the number of unique `keys`, but remains bounded by the cache's internal capacity.
 * **cache.max** *(number)*: Gets or sets the maximum item capacity.
   **Note:** Updating this property dynamically **will clear all existing cached items** (it implicitly invokes cache.clear() to safely recalculate boundaries).
 
-### **Methods**
+### Methods
 
 * **cache.get(key)**
   Retrieves an item. If the item is found in the `old` generation, it is automatically promoted to the `current` generation to prevent it from being evicted during the next swap.
@@ -104,77 +102,77 @@ Benchmarks are divided into two states to simulate real-world conditions:
 
 | Scenario | State | GenerationalCache | LRUCache | QuickLRU | Mnemonist |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| **Set** | Cold | **17,733,640 ops/sec** | 4,933,885 ops/sec | 13,506,212 ops/sec | **17,229,496 ops/sec** |
-| | Warm | **23,030,861 ops/sec** | 15,216,068 ops/sec | 18,175,209 ops/sec | 19,409,937 ops/sec |
-| **Get** | Cold | 17,717,930 ops/sec | 7,633,587 ops/sec | 13,734,377 ops/sec | **30,731,407 ops/sec** |
-| | Warm | 21,724,961 ops/sec | 24,148,756 ops/sec | 16,385,384 ops/sec | **35,688,793 ops/sec** |
-| **Eviction** | Cold | **16,700,066 ops/sec** | 6,953,619 ops/sec | 13,285,505 ops/sec | 4,925,865 ops/sec |
-| | Warm | **23,148,148 ops/sec** | 9,040,773 ops/sec | 16,903,313 ops/sec | 8,037,293 ops/sec |
+| **Set** | Cold | 15,137,754 ops/sec | 4,265,484 ops/sec | 13,800,718 ops/sec | **17,844,397 ops/sec** |
+| | Warm | **18,993,352 ops/sec** | 15,299,878 ops/sec | **18,132,366 ops/sec** | **19,007,793 ops/sec** |
+| **Get** | Cold | 16,028,210 ops/sec | 7,566,013 ops/sec | 13,881,177 ops/sec | **30,030,030 ops/sec** |
+| | Warm | 17,917,936 ops/sec | 23,523,877 ops/sec | 16,458,196 ops/sec | **39,416,634 ops/sec** |
+| **Eviction** | Cold | **16,236,402 ops/sec** | 7,372,457 ops/sec | 14,547,571 ops/sec | 5,407,451 ops/sec |
+| | Warm | **20,479,214 ops/sec** | 8,993,615 ops/sec | 17,123,288 ops/sec | 7,668,712 ops/sec |
 
 ### 2. Medium Cache (Max Size = 2,048)
 
 | Scenario | State | GenerationalCache | LRUCache | QuickLRU | Mnemonist |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| **Set** | Cold | **15,987,210 ops/sec** | 4,874,957 ops/sec | 11,849,745 ops/sec | **15,309,246 ops/sec** |
-| | Warm | **19,716,088 ops/sec** | 13,345,789 ops/sec | 14,755,791 ops/sec | 17,325,017 ops/sec |
-| **Get** | Cold | 14,994,751 ops/sec | 7,950,389 ops/sec | 11,503,508 ops/sec | **23,651,844 ops/sec** |
-| | Warm | 17,825,311 ops/sec | 18,789,928 ops/sec | 13,838,915 ops/sec | **31,289,111 ops/sec** |
-| **Eviction** | Cold | **16,355,904 ops/sec** | 6,757,669 ops/sec | 12,074,378 ops/sec | 5,175,983 ops/sec |
-| | Warm | **21,982,853 ops/sec** | 8,089,305 ops/sec | 15,309,246 ops/sec | 7,132,158 ops/sec |
+| **Set** | Cold | **15,024,038 ops/sec** | 4,537,617 ops/sec | 11,818,934 ops/sec | **15,110,305 ops/sec** |
+| | Warm | **17,126,220 ops/sec** | 13,299,641 ops/sec | 15,309,247 ops/sec | **17,070,673 ops/sec** |
+| **Get** | Cold | 13,976,240 ops/sec | 8,134,711 ops/sec | 11,784,115 ops/sec | **26,315,789 ops/sec** |
+| | Warm | 16,015,375 ops/sec | 19,425,019 ops/sec | 13,599,891 ops/sec | **35,663,338 ops/sec** |
+| **Eviction** | Cold | **14,858,841 ops/sec** | 6,439,979 ops/sec | 12,425,447 ops/sec | 5,252,929 ops/sec |
+| | Warm | **19,805,902 ops/sec** | 7,981,483 ops/sec | 16,108,247 ops/sec | 7,295,010 ops/sec |
 
 ### 3. Large Cache (Max Size = 8,192)
 
 | Scenario | State | GenerationalCache | LRUCache | QuickLRU | Mnemonist |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| **Set** | Cold | **13,679,890 ops/sec** | 3,954,288 ops/sec | 8,126,777 ops/sec | 10,972,130 ops/sec |
-| | Warm | **20,593,080 ops/sec** | 12,054,001 ops/sec | 12,995,451 ops/sec | 15,600,624 ops/sec |
-| **Get** | Cold | 11,918,951 ops/sec | 5,785,363 ops/sec | 9,067,827 ops/sec | **16,784,155 ops/sec** |
-| | Warm | 16,781,339 ops/sec | 17,247,326 ops/sec | 12,733,987 ops/sec | **31,436,655 ops/sec** |
-| **Eviction** | Cold | **13,561,160 ops/sec** | 5,510,249 ops/sec | 9,642,271 ops/sec | 4,040,404 ops/sec |
-| | Warm | **21,128,248 ops/sec** | 7,082,152 ops/sec | 13,208,294 ops/sec | 6,023,007 ops/sec |
+| **Set** | Cold | **13,292,569 ops/sec** | 3,637,686 ops/sec | 7,970,033 ops/sec | 11,318,619 ops/sec |
+| | Warm | **17,652,251 ops/sec** | 11,709,602 ops/sec | 12,781,186 ops/sec | 15,225,335 ops/sec |
+| **Get** | Cold | 13,840,830 ops/sec | 5,746,136 ops/sec | 11,021,713 ops/sec | **17,155,601 ops/sec** |
+| | Warm | 19,116,804 ops/sec | 17,885,888 ops/sec | 15,664,160 ops/sec | **28,344,671 ops/sec** |
+| **Eviction** | Cold | **14,025,245 ops/sec** | 5,358,770 ops/sec | 9,882,399 ops/sec | 4,185,501 ops/sec |
+| | Warm | **19,249,278 ops/sec** | 7,029,383 ops/sec | 13,646,288 ops/sec | 6,086,798 ops/sec |
 
-### 4. Non-Primitive Payload (Max Size = 8,192 / strictValidate = true)
-
-| Scenario | State | GenerationalCache | LRUCache | QuickLRU | Mnemonist |
-| :---- | :---- | :---- | :---- | :---- | :---- |
-| **Set** | Cold | 374,531 ops/sec | 1,292,758 ops/sec | 4,452,161 ops/sec | **5,354,465 ops/sec** |
-| | Warm | 518,134 ops/sec | 7,691,124 ops/sec | 8,514,986 ops/sec | **10,217,635 ops/sec** |
-| **Get** | Cold | **7,426,661 ops/sec** | 4,289,268 ops/sec | 4,451,368 ops/sec | 6,655,574 ops/sec |
-| | Warm | 15,342,129 ops/sec | 13,590,649 ops/sec | 9,823,182 ops/sec | **21,240,441 ops/sec** |
-| **Eviction** | Cold | 378,787 ops/sec | 1,824,500 ops/sec | **5,031,700 ops/sec** | 1,100,666 ops/sec |
-| | Warm | 529,100 ops/sec | 4,524,272 ops/sec | **7,826,563 ops/sec** | 4,026,251 ops/sec |
-
-### 5. Non-Primitive Payload (Max Size = 8,192 / strictValidate = false)
+### 4. Non-Primitive Payload (Max Size = 4,096 / strictValidate = true)
 
 | Scenario | State | GenerationalCache | LRUCache | QuickLRU | Mnemonist |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| **Set** | Cold | **6,328,312 ops/sec** | 1,317,592 ops/sec | 5,003,752 ops/sec | 5,304,476 ops/sec |
-| | Warm | 9,648,784 ops/sec | 8,122,817 ops/sec | 8,040,524 ops/sec | **10,378,827 ops/sec** |
-| **Get** | Cold | 6,740,361 ops/sec | 4,473,472 ops/sec | 4,405,092 ops/sec | **7,171,543 ops/sec** |
-| | Warm | 14,898,688 ops/sec | 13,674,278 ops/sec | 9,323,140 ops/sec | **21,748,586 ops/sec** |
-| **Eviction** | Cold | **5,552,470 ops/sec** | 1,947,571 ops/sec | 4,745,859 ops/sec | 1,126,494 ops/sec |
-| | Warm | **10,757,314 ops/sec** | 4,898,119 ops/sec | 9,266,123 ops/sec | 4,500,450 ops/sec |
+| **Set** | Cold | 602,410 ops/sec | 3,003,725 ops/sec | 9,948,269 ops/sec | **10,231,226 ops/sec** |
+| | Warm | 757,576 ops/sec | 10,964,912 ops/sec | 14,697,237 ops/sec | **16,572,754 ops/sec** |
+| **Get** | Cold | 13,180,440 ops/sec | 7,043,742 ops/sec | 11,037,528 ops/sec | **17,580,872 ops/sec** |
+| | Warm | 16,170,763 ops/sec | 19,007,793 ops/sec | 14,363,689 ops/sec | **28,719,127 ops/sec** |
+| **Eviction** | Cold | 617,284 ops/sec | 5,356,186 ops/sec | **12,072,920 ops/sec** | 2,607,222 ops/sec |
+| | Warm | 775,194 ops/sec | 7,504,127 ops/sec | **14,981,273 ops/sec** | 6,208,481 ops/sec |
+
+### 5. Non-Primitive Payload (Max Size = 4,096 / strictValidate = false)
+
+| Scenario | State | GenerationalCache | LRUCache | QuickLRU | Mnemonist |
+| :---- | :---- | :---- | :---- | :---- | :---- |
+| **Set** | Cold | **12,315,271 ops/sec** | 2,650,060 ops/sec | 10,233,320 ops/sec | 10,884,946 ops/sec |
+| | Warm | **16,100,467 ops/sec** | 10,561,893 ops/sec | 14,624,159 ops/sec | **16,672,224 ops/sec** |
+| **Get** | Cold | 13,835,086 ops/sec | 7,248,478 ops/sec | 10,714,668 ops/sec | **19,015,022 ops/sec** |
+| | Warm | 16,012,810 ops/sec | 18,744,142 ops/sec | 14,106,362 ops/sec | **32,927,231 ops/sec** |
+| **Eviction** | Cold | 10,424,268 ops/sec | 5,473,753 ops/sec | **11,983,223 ops/sec** | 2,544,853 ops/sec |
+| | Warm | **16,291,952 ops/sec** | 6,972,996 ops/sec | 13,417,416 ops/sec | 5,798,782 ops/sec |
 
 ### 6. Cyclic Access (Max Size = 8,192 / Working Set = 5,000)
 
 | Metric | GenerationalCache | LRUCache | QuickLRU | Mnemonist |
 | :---- | :---- | :---- | :---- | :---- |
 | **Hit Rate** | 78.30% | **100.00%** | **100.00%** | **100.00%** |
-| **Throughput** | 10,365,916 ops/sec | 40,832,993 ops/sec | 40,950,040 ops/sec | **48,426,150 ops/sec** |
+| **Throughput** | 8,783,487 ops/sec | 37,778,617 ops/sec | 38,550,501 ops/sec | **44,742,729 ops/sec** |
 
 ### 7. Cyclic Access (Max Size = 4,096 / Working Set = 5,000)
 
 | Metric | GenerationalCache | LRUCache | QuickLRU | Mnemonist |
 | :---- | :---- | :---- | :---- | :---- |
-| **Hit Rate** | 18.06% | 18.06% | **99.98%** | 18.06% |
-| **Throughput** | **13,192,612 ops/sec** | 9,672,115 ops/sec | 10,188,487 ops/sec | 7,564,868 ops/sec |
+| **Hit Rate** | 0.00% | 0.00% | **78.30%** | 0.00% |
+| **Throughput** | **9,931,472 ops/sec** | 6,396,724 ops/sec | 8,509,189 ops/sec | 6,078,288 ops/sec |
 
 ## Key Characteristics
 
 * **High Eviction Efficiency**: `GenerationalCache` demonstrates strong throughput during high-turnover workloads, maintaining a performance margin compared to standard LRU designs in large-scale eviction scenarios.
 * **Predictable Scalability**: While other libraries may experience performance degradation as cache size increases, `GenerationalCache` maintains consistent throughput due to its generational swap mechanism.
 * **Balanced Read/Write**: It provides stable and competitive performance across all basic operations (`get`, `set`), making it suitable for both read-heavy and write-heavy environments.
-* **Strict Validation Toggle**: By default, non-primitive payloads undergo deep validation to ensure memory safety (DoS protection), trading off write throughput. Disabling `strictValidate` regains write performance, assuming payload sizes are managed externally (See 4 & 5).
+* **Strict Validation Toggle**: By default, non-primitive payloads undergo deep validation to prevent memory exhaustion from oversized objects, which impacts write throughput. Disabling `strictValidate` restores write performance, provided that payload sizes are managed externally (See 4 & 5).
 * **Trade-offs**: In cyclic access patterns where the working set is greater than `max / 2` but smaller than `max`, `GenerationalCache` will experience frequent generation swaps and cache misses. To maximize the performance benefits of `GenerationalCache`, it is often better to keep the `max` size small enough to allow some evictions, rather than trying to fit the entire working set (See 6 & 7).
 
 ## License

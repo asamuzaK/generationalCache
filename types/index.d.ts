@@ -8,7 +8,7 @@ export class GenerationalCache<K, V> {
     });
     set max(value: number);
     get max(): number;
-    get size(): number;
+    get entryCount(): number;
     get(key: K): V | undefined;
     set(key: K, value: V): GenerationalCache<any, any>;
     has(key: K): boolean;

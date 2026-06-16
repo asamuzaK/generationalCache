@@ -8,7 +8,7 @@ import QuickLRU from 'quick-lru';
 import { LRUCache as MnemonistLRU } from 'mnemonist';
 import { GenerationalCache } from '../src/index.js';
 
-const DEFAULT_CACHE_SIZE = 8192;
+const DEFAULT_CACHE_SIZE = 4096;
 
 // Parse `--size=XXX` from command line arguments
 let CACHE_SIZE = DEFAULT_CACHE_SIZE;
