@@ -214,6 +214,9 @@ export class GenerationalCache {
         return this.#cacheSymbol;
       }
       default: {
+        if (!this.#strictValidate) {
+          return true;
+        }
         if (input instanceof ArrayBuffer || ArrayBuffer.isView(input)) {
           return input.byteLength <= max;
         }
@@ -222,9 +225,6 @@ export class GenerationalCache {
         }
         if (input instanceof RegExp) {
           return input.toString().length * MAX_BYTES_PER_CHAR <= max;
-        }
-        if (!this.#strictValidate) {
-          return true;
         }
         if (this.#hasForbiddenTypes(input)) {
           return false;
