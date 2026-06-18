@@ -17,10 +17,10 @@ const MAX_BYTES_PER_CHAR = 4;
 const DEFAULT_KEY_SIZE = 8 * 1024;
 
 /**
- * Default maximum allowed size for a value in bytes (8 MB).
+ * Default maximum allowed size for a value in bytes (1 MB).
  * @type {number}
  */
-const DEFAULT_VALUE_SIZE = 8 * 1024 * 1024;
+const DEFAULT_VALUE_SIZE = 1024 * 1024;
 
 /**
  * Flag indicating whether the current runtime environment is Node.js.
@@ -183,6 +183,60 @@ export class GenerationalCache {
   }
 
   /**
+   * Performs validation based on the specific type of built-in object.
+   * @param {string} typeStr - The type string of the object.
+   * @param {object} input - The object to validate.
+   * @param {number} max - The maximum allowable size in bytes.
+   * @returns {{ result?: boolean, input?: unknown }} The validation result, or the input.
+   */
+  #validateBuiltInObject(typeStr, input, max) {
+    switch (typeStr) {
+      case 'Array': {
+        if (input.length > max - 2) {
+          return { result: false };
+        }
+        break;
+      }
+      case 'Map':
+      case 'Set': {
+        if (input.size > max - 2) {
+          return { result: false };
+        }
+        input = [...input];
+        break;
+      }
+      case 'Date': {
+        if (Number.isNaN(input.getTime())) {
+          return { result: false };
+        }
+        return { result: this.#validateString(input.toISOString(), max - 2) };
+      }
+      case 'RegExp': {
+        return { result: this.#validateString(input.toString(), max) };
+      }
+      case 'ArrayBuffer':
+      case 'DataView':
+      case 'Int8Array':
+      case 'Uint8Array':
+      case 'Uint8ClampedArray':
+      case 'Int16Array':
+      case 'Uint16Array':
+      case 'Int32Array':
+      case 'Uint32Array':
+      case 'Float32Array':
+      case 'Float64Array':
+      case 'BigInt64Array':
+      case 'BigUint64Array': {
+        return { result: input.byteLength <= max };
+      }
+      default: {
+        // fall through
+      }
+    }
+    return { input };
+  }
+
+  /**
    * Validates if the given input fits within the specified maximum byte size.
    * @param {K|V} input - The input data to validate (usually a string).
    * @param {number} max - The maximum allowable size in bytes.
@@ -204,8 +258,15 @@ export class GenerationalCache {
         return max >= 8;
       }
       case 'bigint': {
-        // Approximate.
-        return input.toString().length * MAX_BYTES_PER_CHAR <= max;
+        // Normalize negative bigint for bit-length calculation.
+        const signNormalized = input < 0n ? ~input : input;
+        if (signNormalized === 0n) {
+          return true;
+        }
+        const hex = signNormalized.toString(16);
+        const firstCharBits = parseInt(hex[0], 16).toString(2).length;
+        const bitLength = (hex.length - 1) * 4 + firstCharBits + 1;
+        return bitLength <= max * 8;
       }
       case 'function': {
         return this.#cacheFunction;
@@ -217,27 +278,17 @@ export class GenerationalCache {
         if (!this.#strictValidate) {
           return true;
         }
-        if (input instanceof ArrayBuffer || ArrayBuffer.isView(input)) {
-          return input.byteLength <= max;
+        const typeStr = Object.prototype.toString.call(input).slice(8, -1);
+        const typeCheck = this.#validateBuiltInObject(typeStr, input, max);
+        if (typeCheck.result !== undefined) {
+          return typeCheck.result;
         }
-        if (input instanceof Date) {
-          return this.#validateString(input.toISOString(), max);
-        }
-        if (input instanceof RegExp) {
-          return input.toString().length * MAX_BYTES_PER_CHAR <= max;
-        }
+        input = typeCheck.input;
         if (this.#hasForbiddenTypes(input)) {
           return false;
         }
-        let targetForJson = input;
-        if (input instanceof Map || input instanceof Set) {
-          if (!input.size) {
-            return max >= 2;
-          }
-          targetForJson = [...input];
-        }
         try {
-          const serialized = JSON.stringify(targetForJson);
+          const serialized = JSON.stringify(input);
           if (serialized === undefined) {
             return false;
           }

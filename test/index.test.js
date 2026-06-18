@@ -168,13 +168,38 @@ describe('GenerationalCache', () => {
         assert.strictEqual(cache.get(true), 12345);
       });
 
-      it('should validate BigInt values safely', () => {
-        const cache = new GenerationalCache(4, { maxValueSize: 10 });
-        // 10 bytes allows up to 2 chars (2 * 4 = 8 <= 10)
-        cache.set('a', 99n);
-        assert.strictEqual(cache.get('a'), 99n);
-        cache.set('b', 999n); // 3 * 4 = 12 > 10
-        assert.strictEqual(cache.has('b'), false);
+      it('should always allow 0n and -1n due to early return', () => {
+        const tinyCache = new GenerationalCache(4, { maxValueSize: 1 });
+        tinyCache.set('zero', 0n);
+        tinyCache.set('minusOne', -1n);
+        assert.strictEqual(tinyCache.get('zero'), 0n);
+        assert.strictEqual(tinyCache.get('minusOne'), -1n);
+      });
+
+      it('should accurately validate positive BigInts around byte boundaries', () => {
+        const cache = new GenerationalCache(4, { maxValueSize: 1 });
+        cache.set('fit', 127n);
+        assert.strictEqual(cache.get('fit'), 127n);
+        cache.set('exceed', 128n);
+        assert.strictEqual(cache.has('exceed'), false);
+      });
+
+      it('should accurately validate negative BigInts using sign normalization', () => {
+        const cache = new GenerationalCache(4, { maxValueSize: 1 });
+        cache.set('fitNeg', -128n);
+        assert.strictEqual(cache.get('fitNeg'), -128n);
+        cache.set('exceedNeg', -129n);
+        assert.strictEqual(cache.has('exceedNeg'), false);
+      });
+
+      it('should handle huge BigInts efficiently without heavy toString(2) overhead', () => {
+        const hugeBigInt = 1n << 1000n;
+        const smallCache = new GenerationalCache(4, { maxValueSize: 100 });
+        smallCache.set('huge', hugeBigInt);
+        assert.strictEqual(smallCache.has('huge'), false);
+        const largeCache = new GenerationalCache(4, { maxValueSize: 200 });
+        largeCache.set('huge', hugeBigInt);
+        assert.strictEqual(largeCache.get('huge'), hugeBigInt);
       });
 
       it('should validate string sizes considering multi-byte chars', () => {
@@ -198,27 +223,41 @@ describe('GenerationalCache', () => {
         assert.strictEqual(cache.has('view'), false);
       });
 
-      it('should validate Date objects using ISO string length', () => {
-        const cache = new GenerationalCache(4, { maxValueSize: 30 });
-        // e.g. "2026-06-11T07:27:36.000Z" is 24 bytes
-        const date = new Date();
-        cache.set('date', date);
-        assert.strictEqual(cache.get('date'), date);
+      it('should validate valid Date objects correctly near the size boundary', () => {
+        const date = new Date('2026-06-19T14:39:00.000Z');
+        const cacheFit = new GenerationalCache(4, { maxValueSize: 26 });
+        cacheFit.set('date', date);
+        assert.strictEqual(cacheFit.get('date'), date);
+        const cacheExceed = new GenerationalCache(4, { maxValueSize: 25 });
+        cacheExceed.set('date', date);
+        assert.strictEqual(cacheExceed.has('date'), false);
+      });
 
-        const tinyCache = new GenerationalCache(4, { maxValueSize: 20 });
-        tinyCache.set('date', date);
-        assert.strictEqual(tinyCache.has('date'), false);
+      it('should safely reject Invalid Date objects without crashing', () => {
+        const cache = new GenerationalCache(4, { maxValueSize: 100 });
+        const invalidDate = new Date('invalid-date-string');
+        cache.set('invalid', invalidDate);
+        assert.strictEqual(cache.has('invalid'), false);
       });
 
       it('should validate RegExp objects based on string length', () => {
-        const cache = new GenerationalCache(4, { maxValueSize: 20 });
-        // "/test/ig".length = 8 -> 8 * 4 = 32 > 20
-        cache.set('regex', /test/gi);
-        assert.strictEqual(cache.has('regex'), false);
+        const cache = new GenerationalCache(4, { maxValueSize: 5 });
+        cache.set('regex1', /a/gi);
+        assert.strictEqual(cache.has('regex1'), true);
+        assert.strictEqual(cache.get('regex1').source, 'a');
+        const tinyCache = new GenerationalCache(4, { maxValueSize: 20 });
+        cache.set('regex2', /longer-pattern/gi);
+        assert.strictEqual(tinyCache.has('regex2'), false);
+      });
 
-        // "/a/".length = 3 -> 3 * 4 = 12 <= 20
-        cache.set('regex2', /a/);
-        assert.strictEqual(cache.get('regex2').source, 'a');
+      it('should reject Array objects whose length exceeds max - 2 during pre-validation', () => {
+        const cacheMax5 = new GenerationalCache(4, { maxValueSize: 5 });
+        const arrLength3 = [1, 2, 3];
+        cacheMax5.set('arr3', arrLength3);
+        assert.strictEqual(cacheMax5.has('arr3'), false);
+        const arrLength4 = [1, 2, 3, 4];
+        cacheMax5.set('arr4', arrLength4);
+        assert.strictEqual(cacheMax5.has('arr4'), false);
       });
     });
 
@@ -326,7 +365,6 @@ describe('GenerationalCache', () => {
           data: 'looks normal',
           toJSON: () => undefined
         };
-
         funcCache.set('evil', evilObj);
         assert.strictEqual(funcCache.has('evil'), false);
       });
@@ -337,7 +375,6 @@ describe('GenerationalCache', () => {
         cacheMax2.set('emptySet', new Set());
         assert.strictEqual(cacheMax2.has('emptyMap'), true);
         assert.strictEqual(cacheMax2.has('emptySet'), true);
-
         const cacheMax1 = new GenerationalCache(4, { maxValueSize: 1 });
         cacheMax1.set('emptyMap', new Map());
         cacheMax1.set('emptySet', new Set());
@@ -349,18 +386,46 @@ describe('GenerationalCache', () => {
         const cacheMax5 = new GenerationalCache(4, { maxValueSize: 5 });
         cacheMax5.set('set', new Set(['a']));
         assert.strictEqual(cacheMax5.has('set'), true);
-
         const cacheMax4 = new GenerationalCache(4, { maxValueSize: 4 });
         cacheMax4.set('set', new Set(['a']));
         assert.strictEqual(cacheMax4.has('set'), false);
-
         const cacheMax9 = new GenerationalCache(4, { maxValueSize: 9 });
         cacheMax9.set('map', new Map([['a', 1]]));
         assert.strictEqual(cacheMax9.has('map'), true);
-
         const cacheMax8 = new GenerationalCache(4, { maxValueSize: 8 });
         cacheMax8.set('map', new Map([['a', 1]]));
         assert.strictEqual(cacheMax8.has('map'), false);
+      });
+
+      it('should deeply inspect Set instances nested inside objects', () => {
+        const objWithSafeSet = {
+          mySet: new Set(['valid_string', 123])
+        };
+        cache.set('safe-nested-set', objWithSafeSet);
+        assert.strictEqual(cache.has('safe-nested-set'), true);
+        const objWithEvilSet = {
+          mySet: new Set([() => {}])
+        };
+        cache.set('evil-nested-set', objWithEvilSet);
+        assert.strictEqual(cache.has('evil-nested-set'), false);
+      });
+
+      it('should deeply inspect Map instances nested inside objects for both keys and values', () => {
+        const objWithSafeMap = {
+          myMap: new Map([['safeKey', 'safeValue']])
+        };
+        cache.set('safe-nested-map', objWithSafeMap);
+        assert.strictEqual(cache.has('safe-nested-map'), true);
+        const objWithEvilKeyMap = {
+          myMap: new Map([[() => {}, 'safeValue']]) // キーが関数
+        };
+        cache.set('evil-key-nested-map', objWithEvilKeyMap);
+        assert.strictEqual(cache.has('evil-key-nested-map'), false);
+        const objWithEvilValueMap = {
+          myMap: new Map([['safeKey', () => {}]]) // 値が関数
+        };
+        cache.set('evil-value-nested-map', objWithEvilValueMap);
+        assert.strictEqual(cache.has('evil-value-nested-map'), false);
       });
     });
 
