@@ -39,10 +39,18 @@ export class GenerationalCache {
    * @param {boolean} [opt.cacheSymbol] - Caches symbols if true.
    * @param {number} [opt.maxKeySize] - Maximum allowed size for a key in bytes.
    * @param {number} [opt.maxValueSize] - Maximum allowed size for a value in bytes.
-   * @param {boolean} [opt.strictValidate] - Strictly validate if true.
+   * @param {boolean} [opt.strictValidate] - Strictly validate payloads if true.
+   * If false, validation is disabled and other options (e.g., maxKeySize,
+   * maxValueSize, cacheFunction, cacheSymbol) are ignored.
    */
   constructor(maxItems, opt = {}) {
-    const { maxKeySize, maxValueSize, strictValidate } = opt;
+    const {
+      cacheFunction,
+      cacheSymbol,
+      maxKeySize,
+      maxValueSize,
+      strictValidate
+    } = opt;
     this.max = maxItems;
     this.#maxKeySize =
       Number.isInteger(maxKeySize) && maxKeySize
