@@ -6,6 +6,8 @@
 
 A lightweight, **generational cache** with strict entry-count limits and payload validation.
 
+**Deprecated** This package is no longer maintained.
+
 ## How it Works
 
 `GenerationalCache` maintains two internal `Map` objects: `current` and `old`.
